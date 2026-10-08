@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mijn Overzicht</title>
+
+  <style>
+    /* Dit is CSS: hier bepaal je hoe alles eruitziet */
+    body {
+      font-family: sans-serif;
+      background-color: #f4f4f8;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+
+    h1 {
+      color: #4a3aff;
+      margin-bottom: 4px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-top: 32px;
+    }
+
+    ul {
+      padding: 0;
+    }
+
+    li {
+      background-color: white;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      list-style: none;
+      border-left: 6px solid gray;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .afspraak { border-left-color: #2b8a3e; }
+    .deadline { border-left-color: #e03131; }
+    .taak     { border-left-color: #4a3aff; }
+
+    .tekst { flex: 1; }
+
+    .info {
+      color: gray;
+      font-size: 14px;
+    }
+
+    .dringend {
+      color: #e03131;
+      font-weight: bold;
+    }
+
+    /* Afgevinkte items worden doorgestreept en vager */
+    .klaar .tekst {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .leeg {
+      color: gray;
+      font-style: italic;
+    }
+
+    /* Het invulformulier */
+    form {
+      background-color: white;
+      padding: 16px;
+      border-radius: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    input, select, button {
+      font-size: 16px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    #titel { flex: 1 1 100%; }
+
+    form button {
+      background-color: #4a3aff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .verwijder {
+      background: none;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .verwijder:hover { color: #e03131; }
+
+    .verborgen { display: none; }
+  </style>
+</head>
+
+<body>
+  <h1>Vandaag</h1>
+  <p id="datum-vandaag" class="info"></p>
+
+  <!-- Formulier om iets nieuws toe te voegen -->
+  <form id="formulier">
+    <input id="titel" placeholder="Wat moet je doen of waar moet je zijn?" required>
+
+    <select id="soort">
+      <option value="taak">✅ Taak</option>
+      <option value="deadline">⏰ Deadline</option>
+      <option value="afspraak">📅 Afspraak</option>
+    </select>
+
+    <input id="datum" type="date" class="verborgen">
+    <input id="begintijd" type="time" class="verborgen">
+    <input id="eindtijd" type="time" class="verborgen">
+
+    <button type="submit">Toevoegen</button>
+  </form>
+
+  <h2>📅 Afspraken (hier moet ik zijn)</h2>
+  <ul id="lijst-afspraak"></ul>
+
+  <h2>⏰ Deadlines (hier moet ik aan werken)</h2>
+  <ul id="lijst-deadline"></ul>
+
+  <h2>✅ Taken (doe ik wanneer het uitkomt)</h2>
+  <ul id="lijst-taak"></ul>
+
+  <script>
+    // ===== 1. GEGEVENS =====
+    // Alle items staan in één lijst. Elk item ziet er zo uit:
+    // { id, titel, soort, datum, begintijd, eindtijd, klaar }
+    let items = laadItems();
+
+    // Haal de items op uit het geheugen van de browser
+    function laadItems() {
+      try {
+        return JSON.parse(localStorage.getItem("items")) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    // Sla de items op, zodat ze er na het sluiten nog zijn
+    function bewaarItems() {
+      try {
+        localStorage.setItem("items", JSON.stringify(items));
+      } catch {
+        console.warn("Opslaan lukt niet in deze browser");
+      }
+    }
+
+    // ===== 2. DATUMS =====
+    // De datum van vandaag als "2026-10-08"
+    function vandaag() {
+      const nu = new Date();
+      nu.setMinutes(nu.getMinutes() - nu.getTimezoneOffset());
+      return nu.toISOString().slice(0, 10);
+    }
+
+    // Hoeveel dagen is het nog tot een datum? (negatief = voorbij)
+    function dagenTot(datum) {
+      return Math.round((new Date(datum) - new Date(vandaag())) / 86400000);
+    }
+
+    // Maak van "2026-10-09" iets leesbaars als "vr 9 okt"
+    function mooieDatum(datum) {
+      return new Date(datum).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+    }
+
+    // ===== 3. TONEN OP HET SCHERM =====
+    function toonAlles() {
+      toonLijst("afspraak");
+      toonLijst("deadline");
+      toonLijst("taak");
+    }
+
+    function toonLijst(soort) {
+      const lijst = document.getElementById("lijst-" + soort);
+      lijst.innerHTML = "";
+
+      let gekozen = items.filter(item => item.soort === soort);
+
+      // Afspraken die al voorbij zijn laten we niet meer zien
+      if (soort === "afspraak") {
+        gekozen = gekozen.filter(item => dagenTot(item.datum) >= 0);
+      }
+
+      // Sorteren: eerst niet-klaar, daarna op datum en tijd
+      gekozen.sort((a, b) =>
+        (a.klaar - b.klaar) ||
+        (a.datum || "9999").localeCompare(b.datum || "9999") ||
+        (a.begintijd || "").localeCompare(b.begintijd || "")
+      );
+
+      if (gekozen.length === 0) {
+        lijst.innerHTML = '<p class="leeg">Nog niks hier.</p>';
+        return;
+      }
+
+      for (const item of gekozen) {
+        lijst.appendChild(maakRegel(item));
+      }
+    }
+
+    // Maak één regel (li) voor een item
+    function maakRegel(item) {
+      const li = document.createElement("li");
+      li.className = item.soort + (item.klaar ? " klaar" : "");
+
+      // Vinkje om af te vinken (afspraken hoef je niet af te vinken)
+      if (item.soort !== "afspraak") {
+        const vinkje = document.createElement("input");
+        vinkje.type = "checkbox";
+        vinkje.checked = item.klaar;
+        vinkje.onchange = () => vinkAf(item.id);
+        li.appendChild(vinkje);
+      }
+
+      const tekst = document.createElement("span");
+      tekst.className = "tekst";
+      tekst.textContent = item.titel + " ";
+      tekst.appendChild(maakInfo(item));
+      li.appendChild(tekst);
+
+      const kruisje = document.createElement("button");
+      kruisje.className = "verwijder";
+      kruisje.textContent = "✕";
+      kruisje.title = "Verwijderen";
+      kruisje.onclick = () => verwijder(item.id);
+      li.appendChild(kruisje);
+
+      return li;
+    }
+
+    // Het grijze stukje achter de titel, zoals "· nog 2 dagen"
+    function maakInfo(item) {
+      const info = document.createElement("span");
+      info.className = "info";
+
+      if (item.soort === "afspraak") {
+        const dagen = dagenTot(item.datum);
+        const dag = dagen === 0 ? "vandaag" : dagen === 1 ? "morgen" : mooieDatum(item.datum);
+        const tijd = item.begintijd ? " " + item.begintijd + (item.eindtijd ? "–" + item.eindtijd : "") : "";
+        info.textContent = "· " + dag + tijd;
+      }
+
+      if (item.soort === "deadline" && item.datum) {
+        const dagen = dagenTot(item.datum);
+        let wanneer;
+        if (dagen < 0) wanneer = "te laat!";
+        else if (dagen === 0) wanneer = "vandaag!";
+        else if (dagen === 1) wanneer = "morgen";
+        else wanneer = "nog " + dagen + " dagen";
+
+        info.textContent = "· " + mooieDatum(item.datum) + " · " + wanneer;
+        if (dagen <= 2 && !item.klaar) info.classList.add("dringend");
+      }
+
+      return info;
+    }
+
+    // ===== 4. ACTIES =====
+    function voegToe(event) {
+      event.preventDefault(); // zorgt dat de pagina niet herlaadt
+
+      const soort = document.getElementById("soort").value;
+      const datum = document.getElementById("datum").value;
+
+      if (soort !== "taak" && !datum) {
+        alert("Vul een datum in.");
+        return;
+      }
+
+      items.push({
+        id: Date.now(),
+        titel: document.getElementById("titel").value.trim(),
+        soort: soort,
+        datum: soort === "taak" ? "" : datum,
+        begintijd: soort === "afspraak" ? document.getElementById("begintijd").value : "",
+        eindtijd: soort === "afspraak" ? document.getElementById("eindtijd").value : "",
+        klaar: false
+      });
+
+      bewaarItems();
+      toonAlles();
+
+      // Formulier leegmaken voor het volgende item
+      document.getElementById("titel").value = "";
+      document.getElementById("titel").focus();
+    }
+
+    function vinkAf(id) {
+      const item = items.find(item => item.id === id);
+      item.klaar = !item.klaar;
+      bewaarItems();
+      toonAlles();
+    }
+
+    function verwijder(id) {
+      items = items.filter(item => item.id !== id);
+      bewaarItems();
+      toonAlles();
+    }
+
+    // Laat alleen de velden zien die bij de gekozen soort horen
+    function pasVeldenAan() {
+      const soort = document.getElementById("soort").value;
+      document.getElementById("datum").classList.toggle("verborgen", soort === "taak");
+      document.getElementById("begintijd").classList.toggle("verborgen", soort !== "afspraak");
+      document.getElementById("eindtijd").classList.toggle("verborgen", soort !== "afspraak");
+    }
+
+    // ===== 5. STARTEN =====
+    document.getElementById("formulier").addEventListener("submit", voegToe);
+    document.getElementById("soort").addEventListener("change", pasVeldenAan);
+    document.getElementById("datum-vandaag").textContent =
+      new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
+
+    toonAlles();
+  </script>
+</body>
+
+</html>
