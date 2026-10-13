@@ -1,0 +1,169 @@
+/* ===== UITERLIJK VAN DE APP ===== */
+body {
+  font-family: sans-serif;
+  background-color: #f4f4f8;
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+h1 {
+  color: #4a3aff;
+  margin-bottom: 4px;
+}
+
+h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.sectie-kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 32px;
+  margin-bottom: 12px;
+}
+
+/* Kopje per dag in de afspraken ("Vandaag · di 13 okt") */
+.dag-kop {
+  font-size: 14px;
+  color: #555;
+  font-weight: bold;
+  margin: 16px 0 6px;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+ul {
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  background-color: white;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  list-style: none;
+  border-left: 6px solid gray;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.afspraak { border-left-color: #2b8a3e; }
+.deadline { border-left-color: #e03131; }
+.taak     { border-left-color: #4a3aff; }
+
+.tekst { flex: 1; }
+
+.tijd {
+  font-weight: bold;
+  min-width: 92px;
+  font-size: 14px;
+}
+
+.info {
+  color: gray;
+  font-size: 14px;
+}
+
+.dringend {
+  color: #e03131;
+  font-weight: bold;
+}
+
+/* Waarschuwing bij dubbele afspraken */
+.overlap {
+  display: block;
+  color: #d9480f;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.heeft-overlap {
+  background-color: #fff4e6;
+}
+
+/* Afgevinkte items worden doorgestreept en vager */
+.klaar .tekst {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.leeg {
+  color: gray;
+  font-style: italic;
+}
+
+/* Balk met de Google-verbinding */
+#google-balk {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background-color: white;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+#google-tekst { flex: 1; }
+
+/* Het invulformulier */
+form {
+  background-color: white;
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+input, select, button {
+  font-size: 16px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: white;
+}
+
+#titel { flex: 1 1 100%; }
+
+form button, #google-knop {
+  background-color: #4a3aff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+#google-knop, #google-uitlog {
+  font-size: 14px;
+  padding: 6px 10px;
+}
+
+#google-uitlog {
+  cursor: pointer;
+}
+
+#periode {
+  font-size: 14px;
+  padding: 4px 6px;
+}
+
+.verwijder {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.verwijder:hover { color: #e03131; }
+
+.verborgen { display: none; }
