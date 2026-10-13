@@ -14,11 +14,6 @@ function hoofdletter(tekst) {
   return tekst.charAt(0).toUpperCase() + tekst.slice(1);
 }
 
-// Afspraak met een begintijd (dus niet "hele dag")
-function heeftTijd(item) {
-  return item.soort === "afspraak" && !item.heleDag && item.begintijd;
-}
-
 // Wanneer eindigt een afspraak, in minuten? Zonder eindtijd rekenen we 1 uur.
 function eindMinuten(afspraak) {
   const begin = minuten(afspraak.begintijd);
@@ -39,9 +34,9 @@ function weekNummer(datum) {
 function maakChip(item) {
   const soort = isVrij(item) ? "vrij" : item.soort;
   const chip = div("chip chip-" + soort + (item.klaar ? " klaar" : ""));
-  let tekst = item.titel;
-  if (heeftTijd(item)) tekst = item.begintijd + " " + item.titel;
-  else if (soort !== "afspraak") tekst = ICOON[soort] + " " + item.titel;
+  let tekst = (item.vak && item.bron !== "google" ? item.vak + " " : "") + item.titel;
+  if (heeftTijd(item)) tekst = item.begintijd + " " + tekst;
+  else if (soort !== "afspraak" && soort !== "toets") tekst = ICOON[soort] + " " + tekst;
   if (isToets(item)) tekst = "📝 " + tekst;
 
   chip.textContent = tekst;
@@ -76,7 +71,8 @@ function toonWeek() {
 function maakWeekRooster(datums, alle) {
   const perDag = datums.map(datum => itemsOpDag(datum, alle));
   const metTijd = perDag.map(lijst => lijst.filter(heeftTijd));
-  const zonderTijd = perDag.map(lijst => lijst.filter(item => !heeftTijd(item)));
+  // Huiswerk dat bij een les hoort staat al óp die les, dus niet nog eens bovenin
+  const zonderTijd = perDag.map(lijst => lijst.filter(item => !heeftTijd(item) && !item.bijLes));
 
   // Welke uren laten we zien? Standaard 8:00–22:00, meer als dat nodig is
   let beginUur = 8;
@@ -188,7 +184,7 @@ function verdeelOverBanen(afspraken) {
 
 // Eén blok in het weekrooster
 function maakBlok(afspraak, beginUur, plek, overlaptMet) {
-  const blok = div("blok" + (overlaptMet ? " blok-overlap" : ""));
+  const blok = div("blok" + (overlaptMet ? " blok-overlap" : "") + (isToets(afspraak) ? " blok-tentamen" : ""));
   const begin = minuten(afspraak.begintijd);
   const duur = eindMinuten(afspraak) - begin;
 
@@ -207,9 +203,23 @@ function maakBlok(afspraak, beginUur, plek, overlaptMet) {
     (afspraak.locatie ? " · " + afspraak.locatie : "");
   blok.appendChild(info);
 
+  const labels = lesLabels(afspraak);
+  if (labels) {
+    const label = document.createElement("span");
+    label.className = "blok-labels";
+    label.textContent = labels;
+    blok.appendChild(label);
+  }
+
   blok.title = afspraak.titel + "\n" + info.textContent +
-    (afspraak.agendaNaam ? "\nAgenda: " + afspraak.agendaNaam : "") +
-    (overlaptMet ? "\n⚠️ Tegelijk met: " + overlaptMet.join(", ") : "");
+    (afspraak.origineel ? "\n" + afspraak.origineel : "") +
+    (overlaptMet ? "\n⚠️ Tegelijk met: " + overlaptMet.join(", ") : "") +
+    (afspraak.bron === "google" ? "\n\nKlik om vak, tentamen of huiswerk toe te voegen" : "");
+
+  if (afspraak.bron === "google") {
+    blok.classList.add("klikbaar");
+    blok.onclick = () => openLes(afspraak.id);
+  }
   return blok;
 }
 

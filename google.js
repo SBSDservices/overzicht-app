@@ -227,21 +227,33 @@ async function haalTakenOp() {
   driveBestandId = zoek.files[0].id;
   const opDrive = await googleVraag("https://www.googleapis.com/drive/v3/files/" + driveBestandId + "?alt=media");
 
+  // Vroeger stond er alleen een lijst met items in het bestand, nu ook je vakken
+  const oudFormaat = Array.isArray(opDrive);
+  const data = oudFormaat ? { items: opDrive } : opDrive;
+  const driveItems = data.items || [];
+
   // De versie op Drive is de baas. Alleen items die je hier hebt toegevoegd
   // terwijl je niet verbonden was, voegen we eraan toe.
-  const bekend = new Set(opDrive.map(item => item.id));
+  const bekend = new Set(driveItems.map(item => item.id));
   const sinds = Number(laadInstelling("laatstGesynct", "0"));
   const nieuwHier = items.filter(item => !bekend.has(item.id) && item.id > sinds);
 
-  items = opDrive.concat(nieuwHier);
-  if (nieuwHier.length) {
-    bewaarItems(); // stuurt ze ook naar Drive
+  items = driveItems.concat(nieuwHier);
+  if (data.vakken) vakken = data.vakken;
+  if (data.lesVakken) lesVakken = { ...lesVakken, ...data.lesVakken };
+
+  const moetOpslaan = nieuwHier.length || oudFormaat || (!data.vakken && vakken.length);
+  if (moetOpslaan) {
+    bewaarItems(); // stuurt het ook naar Drive
   } else {
-    try {
-      localStorage.setItem("items", JSON.stringify(items));
-    } catch {}
+    bewaarLokaal();
     bewaarInstelling("laatstGesynct", Date.now());
   }
+}
+
+// Wat we in je Drive opslaan
+function driveInhoud() {
+  return JSON.stringify({ versie: 2, items: items, vakken: vakken, lesVakken: lesVakken });
 }
 
 async function maakDriveBestand() {
@@ -252,7 +264,7 @@ async function maakDriveBestand() {
     JSON.stringify({ name: DRIVE_BESTAND, parents: ["appDataFolder"] }) + "\r\n" +
     "--" + grens + "\r\n" +
     "Content-Type: application/json\r\n\r\n" +
-    JSON.stringify(items) + "\r\n" +
+    driveInhoud() + "\r\n" +
     "--" + grens + "--";
 
   const bestand = await googleVraag("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
@@ -278,7 +290,7 @@ async function stuurNaarDrive() {
     await googleVraag("https://www.googleapis.com/upload/drive/v3/files/" + driveBestandId + "?uploadType=media", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(items)
+      body: driveInhoud()
     });
     bewaarInstelling("laatstGesynct", Date.now());
   } catch (fout) {

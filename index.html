@@ -28,9 +28,15 @@
         <option value="taak">✅ Taak</option>
         <option value="deadline">⏰ Deadline</option>
         <option value="afspraak">📅 Afspraak</option>
+        <option value="toets">📝 Toets / tentamen</option>
+        <option value="huiswerk">📖 Huiswerk</option>
         <option value="doel">🎯 Doel</option>
         <option value="vrij">🌴 Vrij / vakantie</option>
       </select>
+
+      <label id="veld-vak" class="veld verborgen">
+        Vak <select id="vak"></select>
+      </label>
 
       <label id="veld-datum" class="veld verborgen">
         <span id="datum-label">Datum</span>
@@ -46,6 +52,17 @@
 
       <button type="submit">Toevoegen</button>
     </form>
+
+    <!-- Je vakken instellen (klik om open te klappen) -->
+    <details id="vakken-beheer">
+      <summary>📚 Mijn vakken</summary>
+      <ul id="vakken-lijst"></ul>
+      <form id="vak-formulier">
+        <input id="vak-code" placeholder="Code, bijv. BEC" maxlength="10" required>
+        <input id="vak-naam" placeholder="Naam, bijv. Bedrijfseconomie" required>
+        <button type="submit">Vak toevoegen</button>
+      </form>
+    </details>
 
     <!-- Kiezen wat je wilt zien -->
     <nav class="tabs">
@@ -84,7 +101,7 @@
       <ul id="lijst-afspraak"></ul>
 
       <div class="sectie-kop">
-        <h2>⏰ Deadlines</h2>
+        <h2>⏰ Deadlines &amp; 📖 huiswerk</h2>
       </div>
       <ul id="lijst-deadline"></ul>
 
@@ -103,8 +120,41 @@
     <section id="weergave-overig" class="verborgen"></section>
   </main>
 
+  <!-- Het venster dat opent als je op een les klikt -->
+  <dialog id="les-venster">
+    <form method="dialog">
+      <button class="venster-sluiten" title="Sluiten">✕</button>
+    </form>
+    <h3 id="les-titel"></h3>
+    <p id="les-info" class="info"></p>
+
+    <label class="veld">Vak <select id="les-vak"></select></label>
+    <p id="les-geen-vakken" class="info">
+      Je hebt nog geen vakken ingesteld.
+      <button id="les-naar-vakken" class="link-knop">Vakken instellen</button>
+    </p>
+
+    <label class="veld vinkje-veld">
+      <input type="checkbox" id="les-tentamen"> 📝 Dit is een tentamen / toets
+    </label>
+
+    <h4>📖 Huiswerk voor deze les</h4>
+    <ul id="les-huiswerk"></ul>
+    <form id="les-huiswerk-formulier" class="rij">
+      <input id="les-nieuw-huiswerk" placeholder="Bijv. H3 opgave 1–10 maken">
+      <button type="submit">Toevoegen</button>
+    </form>
+
+    <div id="les-opdrachten-blok">
+      <h4>⏰ Opdrachten voor dit vak op deze dag</h4>
+      <ul id="les-opdrachten"></ul>
+      <p class="info">Een opdracht toevoegen? Kies bovenin "⏰ Deadline", deze datum en dit vak.</p>
+    </div>
+  </dialog>
+
   <!-- De JavaScript-bestanden -->
   <script src="weergaven.js"></script>
+  <script src="vakken.js"></script>
   <script src="app.js"></script>
   <script src="google.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="startGoogle()"></script>

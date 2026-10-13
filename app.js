@@ -1,8 +1,15 @@
 // ===== 1. GEGEVENS =====
 // Je eigen items. Elk item ziet er zo uit:
-// { id, titel, soort, datum, einddatum, begintijd, eindtijd, klaar }
-// soort is: "taak", "deadline", "afspraak", "doel" of "vrij"
-let items = laadItems();
+// { id, titel, soort, datum, einddatum, begintijd, eindtijd, vak, lesId, klaar }
+// soort is: "taak", "deadline", "afspraak", "doel", "vrij", "toets" of "huiswerk"
+// lesId: bij welke les uit je rooster het hoort (bij toetsen en huiswerk)
+let items = laadJson("items", []);
+
+// Je vakken, bijvoorbeeld { code: "BEC", naam: "Bedrijfseconomie" }
+let vakken = laadJson("vakken", []);
+
+// Welke les bij welk vak hoort: { "id-van-de-les": "BEC" }
+let lesVakken = laadJson("lesVakken", {});
 
 // Afspraken uit je Google Agenda (worden ingevuld door google.js)
 let googleAfspraken = [];
@@ -14,24 +21,31 @@ let periode = laadInstelling("periode", "2");        // aantal dagen in "Vandaag
 let focusDatum = vandaag();                          // welke week/maand/jaar
 let zoekterm = "";
 
-const ICOON = { afspraak: "📅", deadline: "⏰", taak: "✅", doel: "🎯", vrij: "🌴" };
+const ICOON = { afspraak: "📅", deadline: "⏰", taak: "✅", doel: "🎯", vrij: "🌴", toets: "📝", huiswerk: "📖" };
 
-// Haal de items op uit het geheugen van de browser
-function laadItems() {
+// Haal iets op uit het geheugen van de browser
+function laadJson(naam, standaard) {
   try {
-    return JSON.parse(localStorage.getItem("items")) || [];
+    return JSON.parse(localStorage.getItem(naam)) || standaard;
   } catch {
-    return [];
+    return standaard;
   }
 }
 
-// Sla de items op, zodat ze er na het sluiten nog zijn
-function bewaarItems() {
+// Sla alles op in de browser, zodat het er na het sluiten nog is
+function bewaarLokaal() {
   try {
     localStorage.setItem("items", JSON.stringify(items));
+    localStorage.setItem("vakken", JSON.stringify(vakken));
+    localStorage.setItem("lesVakken", JSON.stringify(lesVakken));
   } catch {
     console.warn("Opslaan lukt niet in deze browser");
   }
+}
+
+// Opslaan in de browser én in je Google Drive
+function bewaarItems() {
+  bewaarLokaal();
   bewaarOpDrive(); // staat in google.js
 }
 
@@ -119,13 +133,54 @@ function dagKop(datum) {
 // ===== 3. ITEMS KIEZEN EN SORTEREN =====
 // Al je items samen (eigen + Google), alleen die passen bij je zoekterm
 function alleItems() {
-  return items.concat(googleAfspraken).filter(pastBijZoeken);
+  const lesIds = new Set(googleAfspraken.map(les => les.id));
+
+  const eigen = items
+    // Een tentamen dat aan een les vastzit, laten we zien ÓP die les (niet nog eens apart)
+    .filter(item => !(item.soort === "toets" && lesIds.has(item.lesId)))
+    // Huiswerk dat bij een les hoort, krijgt een merkje (dan zetten we het niet dubbel in het rooster)
+    .map(item => item.lesId && lesIds.has(item.lesId) ? { ...item, bijLes: true } : item);
+
+  return eigen.concat(googleAfspraken.map(verrijkLes)).filter(pastBijZoeken);
+}
+
+// Voeg aan een les uit Google toe wat jij erbij hebt gezet: vak, tentamen, huiswerk, opdrachten
+function verrijkLes(les) {
+  const vak = lesVakken[les.id] || "";
+  const tentamen = items.some(item => item.soort === "toets" && item.lesId === les.id);
+  const huiswerk = items.filter(item => item.soort === "huiswerk" && item.lesId === les.id);
+  const opdrachten = vak
+    ? items.filter(item => item.soort === "deadline" && item.vak === vak && item.datum === les.datum)
+    : [];
+
+  if (!vak && !tentamen && !huiswerk.length && !opdrachten.length) return les;
+
+  return {
+    ...les,
+    vak: vak,
+    origineel: les.titel,
+    titel: (tentamen ? "Tentamen " : "") + (vak ? vakNaam(vak) : les.titel),
+    tentamen: tentamen,
+    huiswerk: huiswerk,
+    opdrachten: opdrachten
+  };
+}
+
+function vakNaam(code) {
+  const vak = vakken.find(vak => vak.code === code);
+  return vak ? vak.naam : code;
 }
 
 function pastBijZoeken(item) {
   if (!zoekterm) return true;
-  const tekst = [item.titel, item.locatie, item.agendaNaam].join(" ").toLowerCase();
+  const tekst = [item.titel, item.origineel, item.locatie, item.agendaNaam, item.vak, item.vak && vakNaam(item.vak)]
+    .join(" ").toLowerCase();
   return tekst.includes(zoekterm);
+}
+
+// Iets met een begintijd dat in het rooster een blok wordt (afspraak of toets)
+function heeftTijd(item) {
+  return (item.soort === "afspraak" || item.soort === "toets") && !item.heleDag && item.begintijd;
 }
 
 // Alles wat op een bepaalde dag valt (ook vakanties van meerdere dagen)
@@ -136,15 +191,17 @@ function itemsOpDag(datum, lijst) {
 }
 
 // Volgorde op een dag: vrij → hele dag → doelen → deadlines → afspraken op tijd
-const RANG = { vrij: 0, doel: 2, deadline: 3, afspraak: 4 };
+const RANG = { vrij: 0, doel: 2, deadline: 3, huiswerk: 3, toets: 4, afspraak: 4 };
 function volgorde(a, b) {
   const rangA = a.heleDag ? 1 : RANG[a.soort];
   const rangB = b.heleDag ? 1 : RANG[b.soort];
   return (rangA - rangB) || (a.begintijd || "").localeCompare(b.begintijd || "");
 }
 
-// Is dit een toets? (we kijken naar woorden in de titel)
+// Is dit een toets? (zelf aangegeven, of herkend aan woorden in de titel)
 function isToets(item) {
+  if (item.soort === "toets" || item.tentamen) return true;
+  if (item.soort === "huiswerk" || item.soort === "taak") return false;
   return /toets|tentamen|proefwerk|examen|\bso\b|\bpw\b|\bse\b/i.test(item.titel);
 }
 
@@ -157,7 +214,7 @@ function isVrij(item) {
 // van de afspraken waarmee hij overlapt.
 function zoekOverlap(afspraken) {
   const overlappen = new Map();
-  const metTijd = afspraken.filter(a => a.soort === "afspraak" && !a.heleDag && a.begintijd && a.eindtijd);
+  const metTijd = afspraken.filter(a => heeftTijd(a) && a.eindtijd);
 
   for (let i = 0; i < metTijd.length; i++) {
     for (let j = i + 1; j < metTijd.length; j++) {
@@ -177,18 +234,24 @@ function zoekOverlap(afspraken) {
 
 // ===== 4. REGELS MAKEN (één item op het scherm) =====
 function maakRegelVoor(item, overlaptMet = []) {
-  if (item.soort === "afspraak") return maakAfspraakRegel(item, overlaptMet);
+  if (item.soort === "afspraak" || item.soort === "toets") return maakAfspraakRegel(item, overlaptMet);
   if (item.soort === "vrij") return maakVrijRegel(item);
   return maakRegel(item);
 }
 
 function maakAfspraakRegel(afspraak, overlaptMet) {
   const li = document.createElement("li");
-  li.className = "afspraak" + (overlaptMet.length ? " heeft-overlap" : "");
+  li.className = "afspraak" + (overlaptMet.length ? " heeft-overlap" : "") + (isToets(afspraak) ? " is-tentamen" : "");
 
   // Afspraken uit Google krijgen de kleur van hun agenda (bijv. Magister)
   if (afspraak.kleur) li.style.borderLeftColor = afspraak.kleur;
-  if (afspraak.agendaNaam) li.title = "Uit agenda: " + afspraak.agendaNaam;
+
+  // Klik op een les uit Google om vak, tentamen of huiswerk toe te voegen
+  if (afspraak.bron === "google") {
+    li.classList.add("klikbaar");
+    li.title = "Klik om vak, tentamen of huiswerk toe te voegen";
+    li.onclick = () => openLes(afspraak.id); // staat in vakken.js
+  }
 
   const tijd = document.createElement("span");
   tijd.className = "tijd";
@@ -198,13 +261,22 @@ function maakAfspraakRegel(afspraak, overlaptMet) {
 
   const tekst = document.createElement("span");
   tekst.className = "tekst";
-  tekst.textContent = afspraak.titel + " ";
+  tekst.textContent = (isToets(afspraak) ? "📝 " : "") + afspraak.titel + " ";
 
-  if (afspraak.locatie) {
+  const extra = [afspraak.vak && afspraak.origineel, afspraak.locatie].filter(Boolean);
+  if (extra.length) {
     const info = document.createElement("span");
     info.className = "info";
-    info.textContent = "· " + afspraak.locatie;
+    info.textContent = "· " + extra.join(" · ");
     tekst.appendChild(info);
+  }
+
+  const labels = lesLabels(afspraak);
+  if (labels) {
+    const label = document.createElement("span");
+    label.className = "les-labels";
+    label.textContent = labels;
+    tekst.appendChild(label);
   }
 
   if (overlaptMet.length) {
@@ -218,6 +290,28 @@ function maakAfspraakRegel(afspraak, overlaptMet) {
   // Alleen je eigen afspraken kun je hier verwijderen, die uit Google niet
   if (afspraak.bron !== "google") li.appendChild(maakVerwijderKnop(afspraak.id));
   return li;
+}
+
+// Het tekstje onder een les, zoals "📖 2 huiswerk · ⏰ 1 opdracht"
+function lesLabels(les) {
+  const delen = [];
+  if (les.huiswerk && les.huiswerk.length) {
+    const open = les.huiswerk.filter(item => !item.klaar).length;
+    delen.push("📖 " + les.huiswerk.length + " huiswerk" + (open === 0 ? " ✓" : ""));
+  }
+  if (les.opdrachten && les.opdrachten.length) {
+    delen.push("⏰ " + les.opdrachten.length + (les.opdrachten.length === 1 ? " opdracht" : " opdrachten"));
+  }
+  return delen.join(" · ");
+}
+
+// Een klein label met de vakcode, zoals [BEC]
+function maakVakLabel(code) {
+  const label = document.createElement("span");
+  label.className = "vak-label";
+  label.textContent = code;
+  label.title = vakNaam(code);
+  return label;
 }
 
 function maakVrijRegel(item) {
@@ -257,7 +351,9 @@ function maakRegel(item) {
 
   const tekst = document.createElement("span");
   tekst.className = "tekst";
-  tekst.textContent = (item.soort === "taak" ? "" : ICOON[item.soort] + " ") + item.titel + " ";
+  tekst.textContent = item.soort === "taak" ? "" : ICOON[item.soort] + " ";
+  if (item.vak) tekst.appendChild(maakVakLabel(item.vak));
+  tekst.appendChild(document.createTextNode(item.titel + " "));
   if (item.datum) tekst.appendChild(maakDatumInfo(item));
   li.appendChild(tekst);
 
@@ -278,7 +374,9 @@ function maakDatumInfo(item) {
   else wanneer = "nog " + dagen + " dagen";
 
   info.textContent = "· " + mooieDatum(item.datum) + " · " + wanneer;
-  if (item.soort === "deadline" && dagen <= 2 && !item.klaar) info.classList.add("dringend");
+  if ((item.soort === "deadline" || item.soort === "huiswerk") && dagen <= 2 && !item.klaar) {
+    info.classList.add("dringend");
+  }
   return info;
 }
 
@@ -331,18 +429,18 @@ function toonDag() {
   lijst.innerHTML = "";
   const datums = [];
   for (let i = 0; i < Number(periode); i++) datums.push(plusDagen(vandaag(), i));
-  vulDagenLijst(lijst, datums, alle, { welkeSoorten: ["afspraak", "vrij"] });
+  vulDagenLijst(lijst, datums, alle, { welkeSoorten: ["afspraak", "vrij", "toets"] });
 
-  toonLijst("deadline", alle);
-  toonLijst("doel", alle);
-  toonLijst("taak", alle);
+  toonLijst("lijst-deadline", ["deadline", "huiswerk"], alle);
+  toonLijst("lijst-doel", ["doel"], alle);
+  toonLijst("lijst-taak", ["taak"], alle);
 }
 
-function toonLijst(soort, alle) {
-  const lijst = document.getElementById("lijst-" + soort);
+function toonLijst(lijstId, soorten, alle) {
+  const lijst = document.getElementById(lijstId);
   lijst.innerHTML = "";
 
-  const gekozen = alle.filter(item => item.soort === soort);
+  const gekozen = alle.filter(item => soorten.includes(item.soort));
 
   // Sorteren: eerst niet-klaar, daarna op datum
   gekozen.sort((a, b) =>
@@ -376,6 +474,9 @@ function toonAlles() {
   if (weergave === "week") toonWeek();   // staat in weergaven.js
   if (weergave === "maand") toonMaand(); // staat in weergaven.js
   if (weergave === "jaar") toonJaar();   // staat in weergaven.js
+
+  toonVakken();          // staat in vakken.js
+  vernieuwLesVenster();  // staat in vakken.js
 }
 
 function kiesWeergave(nieuw) {
@@ -427,6 +528,8 @@ function voegToe(event) {
     return;
   }
   if (soort === "vrij" && (!einddatum || einddatum < datum)) einddatum = datum;
+  const metTijd = soort === "afspraak" || soort === "toets";
+  const metVak = soort === "deadline" || soort === "toets" || soort === "huiswerk";
 
   items.push({
     id: Date.now(),
@@ -434,8 +537,9 @@ function voegToe(event) {
     soort: soort,
     datum: soort === "taak" ? "" : datum,
     einddatum: soort === "vrij" ? einddatum : "",
-    begintijd: soort === "afspraak" ? document.getElementById("begintijd").value : "",
-    eindtijd: soort === "afspraak" ? document.getElementById("eindtijd").value : "",
+    begintijd: metTijd ? document.getElementById("begintijd").value : "",
+    eindtijd: metTijd ? document.getElementById("eindtijd").value : "",
+    vak: metVak ? document.getElementById("vak").value : "",
     klaar: false
   });
 
@@ -463,12 +567,17 @@ function verwijder(id) {
 // Laat alleen de velden zien die bij de gekozen soort horen
 function pasVeldenAan() {
   const soort = document.getElementById("soort").value;
-  const labels = { deadline: "Inleveren op", afspraak: "Datum", doel: "Wil ik halen op", vrij: "Van" };
+  const labels = {
+    deadline: "Inleveren op", afspraak: "Datum", doel: "Wil ik halen op",
+    vrij: "Van", toets: "Datum", huiswerk: "Af hebben op"
+  };
 
   document.getElementById("veld-datum").classList.toggle("verborgen", soort === "taak");
   document.getElementById("datum-label").textContent = labels[soort] || "";
   document.getElementById("veld-einddatum").classList.toggle("verborgen", soort !== "vrij");
-  document.getElementById("veld-tijd").classList.toggle("verborgen", soort !== "afspraak");
+  document.getElementById("veld-tijd").classList.toggle("verborgen", soort !== "afspraak" && soort !== "toets");
+  document.getElementById("veld-vak").classList.toggle("verborgen",
+    soort !== "deadline" && soort !== "toets" && soort !== "huiswerk");
 }
 
 function kiesPeriode() {
