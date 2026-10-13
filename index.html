@@ -9,54 +9,102 @@
 </head>
 
 <body>
-  <h1>Vandaag</h1>
-  <p id="datum-vandaag" class="info"></p>
+  <header>
+    <h1>Mijn Overzicht</h1>
+    <p id="datum-vandaag" class="info"></p>
 
-  <!-- Verbinding met Google (agenda + taken synchroniseren) -->
-  <div id="google-balk">
-    <span id="google-tekst">Google wordt geladen…</span>
-    <button id="google-knop">Verbinden met Google</button>
-    <button id="google-uitlog" class="verborgen" onclick="logUit()">Uitloggen</button>
-  </div>
+    <!-- Verbinding met Google (agenda + taken synchroniseren) -->
+    <div id="google-balk">
+      <span id="google-tekst">Google wordt geladen…</span>
+      <button id="google-knop">Verbinden met Google</button>
+      <button id="google-uitlog" class="verborgen" onclick="logUit()">Uitloggen</button>
+    </div>
 
-  <!-- Formulier om iets nieuws toe te voegen -->
-  <form id="formulier">
-    <input id="titel" placeholder="Wat moet je doen of waar moet je zijn?" required>
+    <!-- Formulier om iets nieuws toe te voegen -->
+    <form id="formulier">
+      <input id="titel" placeholder="Wat moet je doen of waar moet je zijn?" required>
 
-    <select id="soort">
-      <option value="taak">✅ Taak</option>
-      <option value="deadline">⏰ Deadline</option>
-      <option value="afspraak">📅 Afspraak</option>
-    </select>
+      <select id="soort">
+        <option value="taak">✅ Taak</option>
+        <option value="deadline">⏰ Deadline</option>
+        <option value="afspraak">📅 Afspraak</option>
+        <option value="doel">🎯 Doel</option>
+        <option value="vrij">🌴 Vrij / vakantie</option>
+      </select>
 
-    <input id="datum" type="date" class="verborgen">
-    <input id="begintijd" type="time" class="verborgen">
-    <input id="eindtijd" type="time" class="verborgen">
+      <label id="veld-datum" class="veld verborgen">
+        <span id="datum-label">Datum</span>
+        <input id="datum" type="date">
+      </label>
+      <label id="veld-einddatum" class="veld verborgen">
+        t/m <input id="einddatum" type="date">
+      </label>
+      <span id="veld-tijd" class="veld verborgen">
+        van <input id="begintijd" type="time" aria-label="Begintijd">
+        tot <input id="eindtijd" type="time" aria-label="Eindtijd">
+      </span>
 
-    <button type="submit">Toevoegen</button>
-  </form>
+      <button type="submit">Toevoegen</button>
+    </form>
 
-  <div class="sectie-kop">
-    <h2>📅 Afspraken</h2>
-    <select id="periode">
-      <option value="2">Vandaag &amp; morgen</option>
-      <option value="7">Komende 7 dagen</option>
-      <option value="30">Komende 30 dagen</option>
-    </select>
-  </div>
-  <ul id="lijst-afspraak"></ul>
+    <!-- Kiezen wat je wilt zien -->
+    <nav class="tabs">
+      <button data-weergave="dag">Vandaag</button>
+      <button data-weergave="week">Week</button>
+      <button data-weergave="maand">Maand</button>
+      <button data-weergave="jaar">Jaar</button>
+    </nav>
 
-  <div class="sectie-kop">
-    <h2>⏰ Deadlines</h2>
-  </div>
-  <ul id="lijst-deadline"></ul>
+    <div id="werkbalk">
+      <div id="navigatie">
+        <button id="vorige" title="Vorige">‹</button>
+        <button id="volgende" title="Volgende">›</button>
+        <button id="naar-vandaag">Vandaag</button>
+        <span id="periode-titel"></span>
+      </div>
+      <div id="stijl-knoppen" class="schakelaar">
+        <button data-stijl="rooster">Rooster</button>
+        <button data-stijl="lijst">Lijst</button>
+      </div>
+      <input id="zoek" type="search" placeholder="🔍 Zoeken…" aria-label="Zoeken">
+    </div>
+  </header>
 
-  <div class="sectie-kop">
-    <h2>✅ Taken</h2>
-  </div>
-  <ul id="lijst-taak"></ul>
+  <main>
+    <!-- Weergave "Vandaag" -->
+    <section id="weergave-dag">
+      <div class="sectie-kop">
+        <h2>📅 Afspraken</h2>
+        <select id="periode" aria-label="Periode">
+          <option value="1">Alleen vandaag</option>
+          <option value="2">Vandaag &amp; morgen</option>
+          <option value="7">Komende 7 dagen</option>
+        </select>
+      </div>
+      <ul id="lijst-afspraak"></ul>
 
-  <!-- De JavaScript-bestanden: eerst de app, dan de Google-koppeling -->
+      <div class="sectie-kop">
+        <h2>⏰ Deadlines</h2>
+      </div>
+      <ul id="lijst-deadline"></ul>
+
+      <div class="sectie-kop">
+        <h2>✅ Taken</h2>
+      </div>
+      <ul id="lijst-taak"></ul>
+
+      <div class="sectie-kop">
+        <h2>🎯 Doelen</h2>
+      </div>
+      <ul id="lijst-doel"></ul>
+    </section>
+
+    <!-- Weergave Week, Maand of Jaar (wordt door weergaven.js gevuld) -->
+    <section id="weergave-overig" class="verborgen"></section>
+  </main>
+
+  <!-- De JavaScript-bestanden -->
+  <script src="weergaven.js"></script>
   <script src="app.js"></script>
   <script src="google.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="startGoogle()"></script>

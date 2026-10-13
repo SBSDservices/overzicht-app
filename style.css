@@ -2,9 +2,14 @@
 body {
   font-family: sans-serif;
   background-color: #f4f4f8;
-  max-width: 600px;
-  margin: 40px auto;
+  max-width: 1100px;
+  margin: 32px auto;
   padding: 0 16px;
+}
+
+/* Het bovenste deel en "Vandaag" blijven smal, zodat ze goed leesbaar zijn */
+header, #weergave-dag {
+  max-width: 640px;
 }
 
 h1 {
@@ -24,17 +29,6 @@ h2 {
   gap: 8px;
   margin-top: 32px;
   margin-bottom: 12px;
-}
-
-/* Kopje per dag in de afspraken ("Vandaag · di 13 okt") */
-.dag-kop {
-  font-size: 14px;
-  color: #555;
-  font-weight: bold;
-  margin: 16px 0 6px;
-  padding: 0;
-  background: none;
-  border: none;
 }
 
 ul {
@@ -57,6 +51,29 @@ li {
 .afspraak { border-left-color: #2b8a3e; }
 .deadline { border-left-color: #e03131; }
 .taak     { border-left-color: #4a3aff; }
+.doel     { border-left-color: #f08c00; }
+.vrij     { border-left-color: #20c997; background-color: #e6fcf5; }
+
+/* Kopje per dag in een lijst ("Vandaag · di 13 okt") */
+li.dag-kop {
+  font-size: 14px;
+  font-weight: bold;
+  color: #555;
+  margin: 16px 0 6px;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+li.dag-kop.is-vandaag { color: #4a3aff; }
+
+li.leeg-dag {
+  background: none;
+  border: none;
+  padding: 0 0 4px;
+  color: #aaa;
+  font-size: 14px;
+}
 
 .tekst { flex: 1; }
 
@@ -89,7 +106,7 @@ li {
 }
 
 /* Afgevinkte items worden doorgestreept en vager */
-.klaar .tekst {
+.klaar .tekst, .chip.klaar, .jaar-lijst .klaar {
   text-decoration: line-through;
   opacity: 0.5;
 }
@@ -99,7 +116,7 @@ li {
   font-style: italic;
 }
 
-/* Balk met de Google-verbinding */
+/* ===== Balk met de Google-verbinding ===== */
 #google-balk {
   display: flex;
   align-items: center;
@@ -114,13 +131,14 @@ li {
 
 #google-tekst { flex: 1; }
 
-/* Het invulformulier */
+/* ===== Het invulformulier ===== */
 form {
   background-color: white;
   padding: 16px;
   border-radius: 8px;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-top: 12px;
 }
@@ -131,11 +149,20 @@ input, select, button {
   border: 1px solid #ccc;
   border-radius: 6px;
   background-color: white;
+  color: inherit;
 }
 
 #titel { flex: 1 1 100%; }
 
-form button, #google-knop {
+.veld {
+  font-size: 14px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+form button[type="submit"], #google-knop {
   background-color: #4a3aff;
   color: white;
   border: none;
@@ -145,9 +172,6 @@ form button, #google-knop {
 #google-knop, #google-uitlog {
   font-size: 14px;
   padding: 6px 10px;
-}
-
-#google-uitlog {
   cursor: pointer;
 }
 
@@ -166,4 +190,309 @@ form button, #google-knop {
 
 .verwijder:hover { color: #e03131; }
 
-.verborgen { display: none; }
+.verborgen { display: none !important; }
+
+/* ===== Tabbladen en werkbalk ===== */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 20px;
+  background-color: #e5e5ef;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.tabs button, .schakelaar button {
+  flex: 1;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 7px;
+  font-size: 15px;
+}
+
+.tabs button.actief, .schakelaar button.actief {
+  background-color: white;
+  color: #4a3aff;
+  font-weight: bold;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+#werkbalk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+#navigatie {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#navigatie button {
+  cursor: pointer;
+  padding: 6px 12px;
+  font-size: 15px;
+}
+
+#periode-titel {
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.schakelaar {
+  display: flex;
+  background-color: #e5e5ef;
+  padding: 3px;
+  border-radius: 8px;
+}
+
+.schakelaar button {
+  padding: 5px 12px;
+  font-size: 14px;
+}
+
+#zoek {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* ===== Weekrooster ===== */
+.rooster-scroll {
+  overflow-x: auto;
+  background-color: white;
+  border-radius: 8px;
+  margin-bottom: 32px;
+}
+
+.week-raster {
+  display: grid;
+  grid-template-columns: 52px repeat(7, minmax(96px, 1fr));
+  min-width: 720px;
+}
+
+.rooster-dag-kop {
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #eee;
+}
+
+.rooster-dag-kop.is-vandaag {
+  color: #4a3aff;
+}
+
+.rooster-label {
+  font-size: 11px;
+  color: gray;
+  padding: 6px 4px;
+  border-bottom: 1px solid #ddd;
+}
+
+.hele-dag-cel {
+  border-left: 1px solid #eee;
+  border-bottom: 1px solid #ddd;
+  padding: 4px;
+  min-height: 28px;
+}
+
+.tijd-as {
+  position: relative;
+}
+
+.uur-label {
+  position: absolute;
+  right: 6px;
+  font-size: 11px;
+  color: gray;
+  transform: translateY(-50%);
+}
+
+.uur-label:first-child { transform: none; }
+
+.dag-kolom {
+  position: relative;
+  border-left: 1px solid #eee;
+  /* Een lichte lijn bij elk heel uur */
+  background-image: linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
+}
+
+.dag-kolom.is-vandaag {
+  background-color: #f7f6ff;
+}
+
+.blok {
+  position: absolute;
+  background-color: #2b8a3e;
+  color: white;
+  border-radius: 5px;
+  padding: 3px 5px;
+  font-size: 12px;
+  overflow: hidden;
+  box-sizing: border-box;
+  line-height: 1.25;
+}
+
+.blok strong, .blok span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blok span { opacity: 0.9; }
+
+.blok-overlap {
+  outline: 2px solid #fd7e14;
+  z-index: 1;
+}
+
+.nu-lijn {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #e03131;
+  z-index: 2;
+}
+
+/* Labeltjes (in de "hele dag"-rij en in de maand) */
+.chip {
+  font-size: 12px;
+  background-color: #f1f3f5;
+  border-left: 3px solid #2b8a3e;
+  border-radius: 4px;
+  padding: 2px 5px;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip-deadline { border-left-color: #e03131; background-color: #fff5f5; }
+.chip-doel     { border-left-color: #f08c00; background-color: #fff9db; }
+.chip-vrij     { border-left-color: #20c997; background-color: #e6fcf5; }
+.chip-taak     { border-left-color: #4a3aff; }
+.chip-lessen   { border-left-color: #9e69af; color: #555; }
+
+/* ===== Maandrooster ===== */
+.maand-raster {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(88px, 1fr));
+  min-width: 640px;
+}
+
+.maand-dagnaam {
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  color: #555;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.maand-dag {
+  min-height: 96px;
+  padding: 4px;
+  border-right: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.maand-dag:hover { background-color: #f7f6ff; }
+.maand-dag.andere-maand { opacity: 0.4; }
+.maand-dag.vrije-dag { background-color: #f3fcf8; }
+
+.dag-nummer {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.maand-dag.is-vandaag .dag-nummer {
+  background-color: #4a3aff;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+}
+
+.meer {
+  font-size: 11px;
+  color: gray;
+}
+
+/* ===== Jaaroverzicht ===== */
+.jaar-raster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.maand-kaart {
+  background-color: white;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.maand-kaart.is-vandaag {
+  outline: 2px solid #4a3aff;
+}
+
+.maand-kaart-kop {
+  border: none;
+  padding: 0;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  background: none;
+  color: inherit;
+}
+
+.maand-kaart-kop:hover { color: #4a3aff; }
+
+.drukte {
+  height: 8px;
+  background-color: #f1f3f5;
+  border-radius: 4px;
+  margin: 8px 0 4px;
+  overflow: hidden;
+}
+
+.drukte-balk { height: 100%; border-radius: 4px; }
+.drukte-rustig    { background-color: #51cf66; }
+.drukte-gemiddeld { background-color: #fcc419; }
+.drukte-druk      { background-color: #ff6b6b; }
+
+.jaar-lijst-kop {
+  font-size: 13px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.jaar-lijst li {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  margin: 0;
+  font-size: 13px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Telefoon ===== */
+@media (max-width: 600px) {
+  body { margin-top: 16px; }
+  #periode-titel { flex-basis: 100%; margin: 6px 0 0; }
+  #navigatie { flex-wrap: wrap; }
+}

@@ -9,7 +9,7 @@ const GOOGLE_RECHTEN = [
   "https://www.googleapis.com/auth/drive.appdata"
 ].join(" ");
 
-const AGENDA_DAGEN = 30;                      // hoeveel dagen vooruit we ophalen
+const AGENDA_MAANDEN = 13;                    // hoeveel maanden we ophalen (voor het jaaroverzicht)
 const DRIVE_BESTAND = "overzicht-items.json"; // hier staan je taken in je Drive
 
 let tokenClient = null;
@@ -126,25 +126,18 @@ async function haalAgendaOp() {
   const zichtbaar = lijst.items.filter(agenda => agenda.selected);
   const agendas = zichtbaar.length ? zichtbaar : lijst.items;
 
-  // 2. Haal van elke agenda de afspraken van de komende dagen op
+  // 2. Haal van elke agenda de afspraken op: vanaf vorige maand tot een jaar vooruit
   const van = new Date();
+  van.setDate(1);
+  van.setMonth(van.getMonth() - 1);
   van.setHours(0, 0, 0, 0);
   const tot = new Date(van);
-  tot.setDate(tot.getDate() + AGENDA_DAGEN);
+  tot.setMonth(tot.getMonth() + AGENDA_MAANDEN);
 
   const perAgenda = await Promise.all(agendas.map(async agenda => {
-    const url = "https://www.googleapis.com/calendar/v3/calendars/" + encodeURIComponent(agenda.id) + "/events?" +
-      new URLSearchParams({
-        timeMin: van.toISOString(),
-        timeMax: tot.toISOString(),
-        singleEvents: "true",
-        orderBy: "startTime",
-        maxResults: "500"
-      });
-
     try {
-      const data = await googleVraag(url);
-      return data.items
+      const events = await haalEventsOp(agenda, van, tot);
+      return events
         .filter(event => event.status !== "cancelled")
         .map(event => naarAfspraak(event, agenda));
     } catch (fout) {
@@ -156,22 +149,60 @@ async function haalAgendaOp() {
   googleAfspraken = perAgenda.flat();
 }
 
+// Google geeft maximaal 2500 afspraken per keer ("pagina"), dus we vragen
+// net zo lang door tot we alles hebben
+async function haalEventsOp(agenda, van, tot) {
+  const alles = [];
+  let volgendePagina = null;
+
+  do {
+    const vraag = new URLSearchParams({
+      timeMin: van.toISOString(),
+      timeMax: tot.toISOString(),
+      singleEvents: "true",
+      orderBy: "startTime",
+      maxResults: "2500"
+    });
+    if (volgendePagina) vraag.set("pageToken", volgendePagina);
+
+    const data = await googleVraag("https://www.googleapis.com/calendar/v3/calendars/" +
+      encodeURIComponent(agenda.id) + "/events?" + vraag);
+    alles.push(...data.items);
+    volgendePagina = data.nextPageToken;
+  } while (volgendePagina);
+
+  return alles;
+}
+
+// Wat voor agenda is het? School (Magister), feestdagen, of je eigen agenda
+function soortAgenda(agenda) {
+  const naam = (agenda.summaryOverride || agenda.summary || "").toLowerCase();
+  if (agenda.id.includes("#holiday@")) return "feestdag";
+  if (agenda.id.includes("@import.calendar.google.com") || naam.includes("magister")) return "school";
+  return "eigen";
+}
+
 // Zet een afspraak van Google om naar hoe onze app afspraken bewaart
 function naarAfspraak(event, agenda) {
   const heleDag = !event.start.dateTime;
   const begin = heleDag ? null : new Date(event.start.dateTime);
   const eind = heleDag ? null : new Date(event.end.dateTime);
 
+  // Bij "hele dag" geeft Google de dag ná de laatste dag als einde
+  const laatsteDag = heleDag ? plusDagen(event.end.date, -1) : "";
+
   return {
     id: "google-" + agenda.id + "-" + event.id,
     titel: event.summary || "(geen titel)",
     soort: "afspraak",
     datum: heleDag ? event.start.date : datumTekst(begin),
+    einddatum: laatsteDag > event.start.date ? laatsteDag : "",
     begintijd: heleDag ? "" : tijdTekst(begin),
     eindtijd: heleDag ? "" : tijdTekst(eind),
     heleDag: heleDag,
     locatie: event.location || "",
     bron: "google",
+    bronType: soortAgenda(agenda),
     agendaNaam: agenda.summaryOverride || agenda.summary,
     kleur: agenda.backgroundColor
   };
