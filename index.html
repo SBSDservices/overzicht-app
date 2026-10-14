@@ -34,10 +34,6 @@
         <option value="vrij">🌴 Vrij / vakantie</option>
       </select>
 
-      <label id="veld-vak" class="veld verborgen">
-        Vak <select id="vak"></select>
-      </label>
-
       <label id="veld-datum" class="veld verborgen">
         <span id="datum-label">Datum</span>
         <input id="datum" type="date">
@@ -52,17 +48,6 @@
 
       <button type="submit">Toevoegen</button>
     </form>
-
-    <!-- Je vakken instellen (klik om open te klappen) -->
-    <details id="vakken-beheer">
-      <summary>📚 Mijn vakken</summary>
-      <ul id="vakken-lijst"></ul>
-      <form id="vak-formulier">
-        <input id="vak-code" placeholder="Code, bijv. BEC" maxlength="10" required>
-        <input id="vak-naam" placeholder="Naam, bijv. Bedrijfseconomie" required>
-        <button type="submit">Vak toevoegen</button>
-      </form>
-    </details>
 
     <!-- Kiezen wat je wilt zien -->
     <nav class="tabs">
@@ -128,33 +113,25 @@
     <h3 id="les-titel"></h3>
     <p id="les-info" class="info"></p>
 
-    <label class="veld">Vak <select id="les-vak"></select></label>
-    <p id="les-geen-vakken" class="info">
-      Je hebt nog geen vakken ingesteld.
-      <button id="les-naar-vakken" class="link-knop">Vakken instellen</button>
-    </p>
+    <h4>📖 Te doen voor deze les</h4>
+    <ul id="les-huiswerk"></ul>
+    <form id="les-huiswerk-formulier" class="rij">
+      <input id="les-nieuw-huiswerk" placeholder="Bijv. H3 opgave 1–10 maken, opdracht inleveren…">
+      <button type="submit">Toevoegen</button>
+    </form>
+
+    <h4>🏷️ Naam zoals in Magister <span class="info">(mag leeg blijven)</span></h4>
+    <input id="les-naam" placeholder="Bijv. 1H-BMA-BAS-T" aria-label="Naam zoals in Magister">
+    <p class="info">Eindigt de naam op <strong>-T</strong>? Dan wordt het vanzelf een tentamen.</p>
 
     <label class="veld vinkje-veld">
       <input type="checkbox" id="les-tentamen"> 📝 Dit is een tentamen / toets
     </label>
-
-    <h4>📖 Huiswerk voor deze les</h4>
-    <ul id="les-huiswerk"></ul>
-    <form id="les-huiswerk-formulier" class="rij">
-      <input id="les-nieuw-huiswerk" placeholder="Bijv. H3 opgave 1–10 maken">
-      <button type="submit">Toevoegen</button>
-    </form>
-
-    <div id="les-opdrachten-blok">
-      <h4>⏰ Opdrachten voor dit vak op deze dag</h4>
-      <ul id="les-opdrachten"></ul>
-      <p class="info">Een opdracht toevoegen? Kies bovenin "⏰ Deadline", deze datum en dit vak.</p>
-    </div>
   </dialog>
 
   <!-- De JavaScript-bestanden -->
   <script src="weergaven.js"></script>
-  <script src="vakken.js"></script>
+  <script src="lessen.js"></script>
   <script src="app.js"></script>
   <script src="google.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="startGoogle()"></script>

@@ -227,7 +227,7 @@ async function haalTakenOp() {
   driveBestandId = zoek.files[0].id;
   const opDrive = await googleVraag("https://www.googleapis.com/drive/v3/files/" + driveBestandId + "?alt=media");
 
-  // Vroeger stond er alleen een lijst met items in het bestand, nu ook je vakken
+  // Vroeger stond er alleen een lijst met items in het bestand, nu ook je lesnamen
   const oudFormaat = Array.isArray(opDrive);
   const data = oudFormaat ? { items: opDrive } : opDrive;
   const driveItems = data.items || [];
@@ -239,10 +239,10 @@ async function haalTakenOp() {
   const nieuwHier = items.filter(item => !bekend.has(item.id) && item.id > sinds);
 
   items = driveItems.concat(nieuwHier);
-  if (data.vakken) vakken = data.vakken;
-  if (data.lesVakken) lesVakken = { ...lesVakken, ...data.lesVakken };
+  const driveNamen = data.lesNamen || data.lesVakken; // lesVakken: van een oudere versie
+  if (driveNamen) lesNamen = { ...lesNamen, ...driveNamen };
 
-  const moetOpslaan = nieuwHier.length || oudFormaat || (!data.vakken && vakken.length);
+  const moetOpslaan = nieuwHier.length || oudFormaat || !data.lesNamen;
   if (moetOpslaan) {
     bewaarItems(); // stuurt het ook naar Drive
   } else {
@@ -253,7 +253,7 @@ async function haalTakenOp() {
 
 // Wat we in je Drive opslaan
 function driveInhoud() {
-  return JSON.stringify({ versie: 2, items: items, vakken: vakken, lesVakken: lesVakken });
+  return JSON.stringify({ versie: 3, items: items, lesNamen: lesNamen });
 }
 
 async function maakDriveBestand() {

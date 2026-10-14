@@ -34,7 +34,7 @@ function weekNummer(datum) {
 function maakChip(item) {
   const soort = isVrij(item) ? "vrij" : item.soort;
   const chip = div("chip chip-" + soort + (item.klaar ? " klaar" : ""));
-  let tekst = (item.vak && item.bron !== "google" ? item.vak + " " : "") + item.titel;
+  let tekst = item.titel;
   if (heeftTijd(item)) tekst = item.begintijd + " " + tekst;
   else if (soort !== "afspraak" && soort !== "toets") tekst = ICOON[soort] + " " + tekst;
   if (isToets(item)) tekst = "📝 " + tekst;
@@ -214,7 +214,7 @@ function maakBlok(afspraak, beginUur, plek, overlaptMet) {
   blok.title = afspraak.titel + "\n" + info.textContent +
     (afspraak.origineel ? "\n" + afspraak.origineel : "") +
     (overlaptMet ? "\n⚠️ Tegelijk met: " + overlaptMet.join(", ") : "") +
-    (afspraak.bron === "google" ? "\n\nKlik om vak, tentamen of huiswerk toe te voegen" : "");
+    (afspraak.bron === "google" ? "\n\nKlik om huiswerk toe te voegen of de les een naam te geven" : "");
 
   if (afspraak.bron === "google") {
     blok.classList.add("klikbaar");

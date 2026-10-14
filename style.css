@@ -534,37 +534,13 @@ li.klikbaar:hover { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
   font-weight: bold;
 }
 
-/* "📚 Mijn vakken" */
-#vakken-beheer {
-  background-color: white;
-  border-radius: 8px;
-  padding: 10px 16px;
-  margin-top: 12px;
-}
-
-#vakken-beheer summary {
-  cursor: pointer;
-  font-weight: bold;
-}
-
-#vakken-lijst { margin-top: 10px; }
-
-#vakken-lijst li {
-  background-color: #f8f9fa;
-  padding: 8px 10px;
-  margin-bottom: 4px;
-  border-left: none;
-}
-
-#vak-formulier {
-  padding: 8px 0 4px;
-  margin: 0;
-}
-
-#vak-code { width: 120px; }
-#vak-naam { flex: 1; min-width: 160px; }
-
 /* Het les-venster */
+#les-naam {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#les-venster h4 .info { font-weight: normal; }
 #les-venster {
   border: none;
   border-radius: 12px;

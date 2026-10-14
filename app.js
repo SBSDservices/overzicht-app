@@ -1,15 +1,14 @@
 // ===== 1. GEGEVENS =====
 // Je eigen items. Elk item ziet er zo uit:
-// { id, titel, soort, datum, einddatum, begintijd, eindtijd, vak, lesId, klaar }
+// { id, titel, soort, datum, einddatum, begintijd, eindtijd, lesId, klaar }
 // soort is: "taak", "deadline", "afspraak", "doel", "vrij", "toets" of "huiswerk"
 // lesId: bij welke les uit je rooster het hoort (bij toetsen en huiswerk)
 let items = laadJson("items", []);
 
-// Je vakken, bijvoorbeeld { code: "BEC", naam: "Bedrijfseconomie" }
-let vakken = laadJson("vakken", []);
-
-// Welke les bij welk vak hoort: { "id-van-de-les": "BEC" }
-let lesVakken = laadJson("lesVakken", {});
+// De naam die je zelf aan een les geeft, zoals in Magister:
+// { "id-van-de-les": "1H-BMA-BAS-T" }
+// (vroeger heette dit "lesVakken"; dat nemen we over als het er nog is)
+let lesNamen = { ...laadJson("lesVakken", {}), ...laadJson("lesNamen", {}) };
 
 // Afspraken uit je Google Agenda (worden ingevuld door google.js)
 let googleAfspraken = [];
@@ -36,8 +35,7 @@ function laadJson(naam, standaard) {
 function bewaarLokaal() {
   try {
     localStorage.setItem("items", JSON.stringify(items));
-    localStorage.setItem("vakken", JSON.stringify(vakken));
-    localStorage.setItem("lesVakken", JSON.stringify(lesVakken));
+    localStorage.setItem("lesNamen", JSON.stringify(lesNamen));
   } catch {
     console.warn("Opslaan lukt niet in deze browser");
   }
@@ -144,37 +142,31 @@ function alleItems() {
   return eigen.concat(googleAfspraken.map(verrijkLes)).filter(pastBijZoeken);
 }
 
-// Voeg aan een les uit Google toe wat jij erbij hebt gezet: vak, tentamen, huiswerk, opdrachten
+// Voeg aan een les uit Google toe wat jij erbij hebt gezet: naam, tentamen, huiswerk
 function verrijkLes(les) {
-  const vak = lesVakken[les.id] || "";
+  const naam = lesNamen[les.id] || "";
   const tentamen = items.some(item => item.soort === "toets" && item.lesId === les.id);
   const huiswerk = items.filter(item => item.soort === "huiswerk" && item.lesId === les.id);
-  const opdrachten = vak
-    ? items.filter(item => item.soort === "deadline" && item.vak === vak && item.datum === les.datum)
-    : [];
 
-  if (!vak && !tentamen && !huiswerk.length && !opdrachten.length) return les;
+  if (!naam && !tentamen && !huiswerk.length) return les;
 
   return {
     ...les,
-    vak: vak,
-    origineel: les.titel,
-    titel: (tentamen ? "Tentamen " : "") + (vak ? vakNaam(vak) : les.titel),
+    origineel: les.titel,                       // zoals Google het noemt ("6-7 enge, brus")
+    titel: naam || (tentamen ? "Tentamen" : les.titel), // zoals jij het noemt ("1H-BMA-BAS-T")
     tentamen: tentamen,
-    huiswerk: huiswerk,
-    opdrachten: opdrachten
+    huiswerk: huiswerk
   };
 }
 
-function vakNaam(code) {
-  const vak = vakken.find(vak => vak.code === code);
-  return vak ? vak.naam : code;
+// Een naam zoals in Magister die eindigt op "-T" is een tentamen (bijv. 1H-BMA-BAS-T)
+function isTentamenNaam(naam) {
+  return /-T\b/i.test(naam);
 }
 
 function pastBijZoeken(item) {
   if (!zoekterm) return true;
-  const tekst = [item.titel, item.origineel, item.locatie, item.agendaNaam, item.vak, item.vak && vakNaam(item.vak)]
-    .join(" ").toLowerCase();
+  const tekst = [item.titel, item.origineel, item.locatie, item.agendaNaam].join(" ").toLowerCase();
   return tekst.includes(zoekterm);
 }
 
@@ -246,11 +238,11 @@ function maakAfspraakRegel(afspraak, overlaptMet) {
   // Afspraken uit Google krijgen de kleur van hun agenda (bijv. Magister)
   if (afspraak.kleur) li.style.borderLeftColor = afspraak.kleur;
 
-  // Klik op een les uit Google om vak, tentamen of huiswerk toe te voegen
+  // Klik op een les uit Google om huiswerk, een naam of een tentamen toe te voegen
   if (afspraak.bron === "google") {
     li.classList.add("klikbaar");
-    li.title = "Klik om vak, tentamen of huiswerk toe te voegen";
-    li.onclick = () => openLes(afspraak.id); // staat in vakken.js
+    li.title = "Klik om huiswerk toe te voegen of de les een naam te geven";
+    li.onclick = () => openLes(afspraak.id); // staat in lessen.js
   }
 
   const tijd = document.createElement("span");
@@ -263,7 +255,7 @@ function maakAfspraakRegel(afspraak, overlaptMet) {
   tekst.className = "tekst";
   tekst.textContent = (isToets(afspraak) ? "📝 " : "") + afspraak.titel + " ";
 
-  const extra = [afspraak.vak && afspraak.origineel, afspraak.locatie].filter(Boolean);
+  const extra = [afspraak.origineel !== afspraak.titel && afspraak.origineel, afspraak.locatie].filter(Boolean);
   if (extra.length) {
     const info = document.createElement("span");
     info.className = "info";
@@ -292,25 +284,25 @@ function maakAfspraakRegel(afspraak, overlaptMet) {
   return li;
 }
 
-// Het tekstje onder een les, zoals "📖 2 huiswerk · ⏰ 1 opdracht"
+// Het tekstje onder een les, zoals "📖 2 te doen" (of "✓ alles af")
 function lesLabels(les) {
-  const delen = [];
-  if (les.huiswerk && les.huiswerk.length) {
-    const open = les.huiswerk.filter(item => !item.klaar).length;
-    delen.push("📖 " + les.huiswerk.length + " huiswerk" + (open === 0 ? " ✓" : ""));
-  }
-  if (les.opdrachten && les.opdrachten.length) {
-    delen.push("⏰ " + les.opdrachten.length + (les.opdrachten.length === 1 ? " opdracht" : " opdrachten"));
-  }
-  return delen.join(" · ");
+  if (!les.huiswerk || les.huiswerk.length === 0) return "";
+  const open = les.huiswerk.filter(item => !item.klaar).length;
+  return open === 0 ? "📖 ✓ alles af" : "📖 " + open + " te doen";
 }
 
-// Een klein label met de vakcode, zoals [BEC]
-function maakVakLabel(code) {
+// De naam van een les: jouw naam (zoals in Magister), anders die uit Google
+function lesNaam(lesId) {
+  if (lesNamen[lesId]) return lesNamen[lesId];
+  const les = googleAfspraken.find(les => les.id === lesId);
+  return les ? les.titel : "";
+}
+
+// Een klein label, bijvoorbeeld met de les waar huiswerk bij hoort
+function maakLabel(tekst) {
   const label = document.createElement("span");
   label.className = "vak-label";
-  label.textContent = code;
-  label.title = vakNaam(code);
+  label.textContent = tekst;
   return label;
 }
 
@@ -352,7 +344,8 @@ function maakRegel(item) {
   const tekst = document.createElement("span");
   tekst.className = "tekst";
   tekst.textContent = item.soort === "taak" ? "" : ICOON[item.soort] + " ";
-  if (item.vak) tekst.appendChild(maakVakLabel(item.vak));
+  const bijLes = item.lesId ? lesNaam(item.lesId) : item.vak; // (vak: van een oudere versie)
+  if (bijLes) tekst.appendChild(maakLabel(bijLes));
   tekst.appendChild(document.createTextNode(item.titel + " "));
   if (item.datum) tekst.appendChild(maakDatumInfo(item));
   li.appendChild(tekst);
@@ -475,8 +468,7 @@ function toonAlles() {
   if (weergave === "maand") toonMaand(); // staat in weergaven.js
   if (weergave === "jaar") toonJaar();   // staat in weergaven.js
 
-  toonVakken();          // staat in vakken.js
-  vernieuwLesVenster();  // staat in vakken.js
+  vernieuwLesVenster();  // staat in lessen.js
 }
 
 function kiesWeergave(nieuw) {
@@ -529,7 +521,6 @@ function voegToe(event) {
   }
   if (soort === "vrij" && (!einddatum || einddatum < datum)) einddatum = datum;
   const metTijd = soort === "afspraak" || soort === "toets";
-  const metVak = soort === "deadline" || soort === "toets" || soort === "huiswerk";
 
   items.push({
     id: Date.now(),
@@ -539,7 +530,6 @@ function voegToe(event) {
     einddatum: soort === "vrij" ? einddatum : "",
     begintijd: metTijd ? document.getElementById("begintijd").value : "",
     eindtijd: metTijd ? document.getElementById("eindtijd").value : "",
-    vak: metVak ? document.getElementById("vak").value : "",
     klaar: false
   });
 
@@ -576,8 +566,6 @@ function pasVeldenAan() {
   document.getElementById("datum-label").textContent = labels[soort] || "";
   document.getElementById("veld-einddatum").classList.toggle("verborgen", soort !== "vrij");
   document.getElementById("veld-tijd").classList.toggle("verborgen", soort !== "afspraak" && soort !== "toets");
-  document.getElementById("veld-vak").classList.toggle("verborgen",
-    soort !== "deadline" && soort !== "toets" && soort !== "huiswerk");
 }
 
 function kiesPeriode() {
