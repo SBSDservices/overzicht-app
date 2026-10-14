@@ -30,6 +30,7 @@
         <option value="afspraak">📅 Afspraak</option>
         <option value="toets">📝 Toets / mondeling</option>
         <option value="huiswerk">📖 Huiswerk</option>
+        <option value="optie">💪 Optie (kan, hoeft niet)</option>
         <option value="doel">🎯 Doel</option>
         <option value="vrij">🌴 Vrij / vakantie</option>
       </select>
@@ -39,8 +40,18 @@
           <option value="">Eén keer</option>
           <option value="dag">🔁 Elke dag</option>
           <option value="week">🔁 Elke week</option>
+          <option value="dagen">🔁 Op vaste dagen…</option>
         </select>
       </label>
+      <span id="veld-dagen" class="veld dagen-kiezer verborgen">
+        <label><input type="checkbox" value="1"> ma</label>
+        <label><input type="checkbox" value="2"> di</label>
+        <label><input type="checkbox" value="3"> wo</label>
+        <label><input type="checkbox" value="4"> do</label>
+        <label><input type="checkbox" value="5"> vr</label>
+        <label><input type="checkbox" value="6"> za</label>
+        <label><input type="checkbox" value="0"> zo</label>
+      </span>
       <label id="veld-datum" class="veld">
         <span id="datum-label">Datum</span>
         <input id="datum" type="date">
@@ -86,6 +97,14 @@
         <h2>✅ Te doen</h2>
       </div>
       <ul id="lijst-te-doen"></ul>
+
+      <div id="blok-optie" class="verborgen">
+        <div class="sectie-kop">
+          <h2>💪 Kan vandaag</h2>
+          <span class="info">hoeft niet, mag wel</span>
+        </div>
+        <ul id="lijst-optie"></ul>
+      </div>
 
       <div class="sectie-kop">
         <h2>📅 Afspraken</h2>

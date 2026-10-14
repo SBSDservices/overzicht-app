@@ -617,6 +617,44 @@ li.klikbaar:hover { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
   font-size: inherit;
 }
 
+/* ===== Opties (zoals sport) ===== */
+.optie { border-left-color: #12b886; border-left-style: dashed; }
+li.optie.botst { background-color: #fff9f5; }
+.chip-optie { border-left-color: #12b886; border-left-style: dashed; background-color: #f3fcf8; }
+
+.past {
+  display: block;
+  color: #2b8a3e;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.blok.blok-optie {
+  background-color: rgba(18, 184, 134, 0.15) !important;
+  color: #087f5b;
+  border: 2px dashed #12b886;
+}
+
+.blok.blok-optie.klaar {
+  background-color: #12b886 !important;
+  color: white;
+}
+
+.dagen-kiezer {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dagen-kiezer label {
+  background-color: #f1f3f5;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* ===== Telefoon ===== */
 @media (max-width: 600px) {
   body { margin-top: 16px; }

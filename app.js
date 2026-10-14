@@ -20,7 +20,8 @@ let periode = laadInstelling("periode", "2");        // aantal dagen in "Vandaag
 let focusDatum = vandaag();                          // welke week/maand/jaar
 let zoekterm = "";
 
-const ICOON = { afspraak: "📅", deadline: "⏰", taak: "✅", doel: "🎯", vrij: "🌴", toets: "📝", huiswerk: "📖" };
+const ICOON = { afspraak: "📅", deadline: "⏰", taak: "✅", doel: "🎯", vrij: "🌴", toets: "📝", huiswerk: "📖", optie: "💪" };
+const DAGNAMEN = ["zo", "ma", "di", "wo", "do", "vr", "za"];
 
 // Haal iets op uit het geheugen van de browser
 function laadJson(naam, standaard) {
@@ -170,9 +171,9 @@ function pastBijZoeken(item) {
   return tekst.includes(zoekterm);
 }
 
-// Iets met een begintijd dat in het rooster een blok wordt (afspraak of toets)
+// Iets met een begintijd dat in het rooster een blok wordt (afspraak, toets of optie)
 function heeftTijd(item) {
-  return (item.soort === "afspraak" || item.soort === "toets") && !item.heleDag && item.begintijd;
+  return ["afspraak", "toets", "optie"].includes(item.soort) && !item.heleDag && item.begintijd;
 }
 
 // Valt dit item op deze dag? (ook vakanties van meerdere dagen en herhalende taken)
@@ -180,7 +181,25 @@ function valtOp(item, datum) {
   if (!item.datum || datum < item.datum) return false;
   if (item.herhaal === "dag") return true;
   if (item.herhaal === "week") return dagenTussen(item.datum, datum) % 7 === 0;
+  if (item.herhaal === "dagen") return (item.herhaalDagen || []).includes(weekdag(datum));
   return datum <= (item.einddatum || item.datum);
+}
+
+// 0 = zondag, 1 = maandag, … 6 = zaterdag
+function weekdag(datum) {
+  return new Date(datum).getUTCDay();
+}
+
+// "elke dag", "elke week" of "ma, wo, vr"
+function herhaalTekst(item) {
+  if (item.herhaal === "dag") return "🔁 elke dag";
+  if (item.herhaal === "week") return "🔁 elke " + DAGNAMEN[weekdag(item.datum)];
+  if (item.herhaal === "dagen") {
+    // Op volgorde van maandag t/m zondag
+    const dagen = [...item.herhaalDagen].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
+    return "🔁 " + dagen.map(dag => DAGNAMEN[dag]).join(", ");
+  }
+  return "";
 }
 
 function dagenTussen(van, tot) {
@@ -206,7 +225,7 @@ function itemsOpDag(datum, lijst) {
 }
 
 // Volgorde op een dag: vrij → hele dag → doelen → deadlines → afspraken op tijd
-const RANG = { vrij: 0, doel: 2, deadline: 3, huiswerk: 3, taak: 3, toets: 4, afspraak: 4 };
+const RANG = { vrij: 0, doel: 2, deadline: 3, huiswerk: 3, taak: 3, toets: 4, afspraak: 4, optie: 5 };
 function volgorde(a, b) {
   const rangA = a.heleDag ? 1 : RANG[a.soort];
   const rangB = b.heleDag ? 1 : RANG[b.soort];
@@ -229,7 +248,8 @@ function isVrij(item) {
 // van de afspraken waarmee hij overlapt.
 function zoekOverlap(afspraken) {
   const overlappen = new Map();
-  const metTijd = afspraken.filter(a => heeftTijd(a) && a.eindtijd);
+  // Opties (zoals sport) tellen niet mee: die hoeven niet, dus geen waarschuwing
+  const metTijd = afspraken.filter(a => heeftTijd(a) && a.eindtijd && a.soort !== "optie");
 
   for (let i = 0; i < metTijd.length; i++) {
     for (let j = i + 1; j < metTijd.length; j++) {
@@ -392,8 +412,8 @@ function maakDatumInfo(item) {
   else wanneer = "nog " + dagen + " dagen";
 
   const delen = [mooieDatum(item.datum)];
-  if (item.begintijd) delen.push(item.begintijd);
-  if (item.herhaal) delen.push(item.herhaal === "dag" ? "🔁 elke dag" : "🔁 elke week");
+  if (item.begintijd) delen.push(item.begintijd + (item.eindtijd ? "–" + item.eindtijd : ""));
+  if (item.herhaal) delen.push(herhaalTekst(item));
   else delen.push(wanneer);
 
   info.textContent = "· " + delen.join(" · ");
@@ -455,7 +475,41 @@ function toonDag() {
   vulDagenLijst(lijst, datums, alle, { welkeSoorten: ["afspraak", "vrij", "toets"] });
 
   toonTeDoen();
+  toonOpties(alle);
   toonLijst("lijst-doel", ["doel"], alle);
+}
+
+// ===== "KAN VANDAAG": opties zoals sport (hoeft niet, mag wel) =====
+function toonOpties(alle) {
+  const lijst = document.getElementById("lijst-optie");
+  lijst.innerHTML = "";
+
+  const vandaagAlles = itemsOpDag(vandaag(), alle);
+  const opties = vandaagAlles.filter(item => item.soort === "optie");
+  const bezet = vandaagAlles.filter(item => heeftTijd(item) && item.soort !== "optie" && item.eindtijd);
+
+  document.getElementById("blok-optie").classList.toggle("verborgen", opties.length === 0);
+
+  for (const optie of opties) {
+    const li = maakRegel(optie);
+
+    // Botst het met iets wat je al hebt? (les, werk, afspraak)
+    if (optie.begintijd) {
+      const optieEind = optie.eindtijd || optie.begintijd;
+      const botst = bezet.filter(item => item.begintijd < optieEind && optie.begintijd < item.eindtijd);
+      const melding = document.createElement("span");
+      if (botst.length) {
+        melding.className = "overlap";
+        melding.textContent = "⚠️ Botst met: " + botst.map(item => item.titel).join(", ");
+        li.classList.add("botst");
+      } else {
+        melding.className = "past";
+        melding.textContent = "✓ Past in je dag";
+      }
+      li.querySelector(".tekst").appendChild(melding);
+    }
+    lijst.appendChild(li);
+  }
 }
 
 // ===== "TE DOEN": alles wat je nog moet doen, op volgorde van wanneer =====
@@ -628,14 +682,26 @@ function voegToe(event) {
   const datum = document.getElementById("datum").value;
   let einddatum = document.getElementById("einddatum").value;
 
-  const herhaal = soort === "taak" ? document.getElementById("herhaal").value : "";
+  const kanHerhalen = soort === "taak" || soort === "optie";
+  const herhaal = kanHerhalen ? document.getElementById("herhaal").value : "";
 
-  if (soort !== "taak" && !datum) {
+  // Welke dagen zijn aangevinkt? (bij "op vaste dagen")
+  const herhaalDagen = [...document.querySelectorAll("#veld-dagen input:checked")].map(vakje => Number(vakje.value));
+  if (herhaal === "dagen" && herhaalDagen.length === 0) {
+    alert("Vink aan op welke dagen.");
+    return;
+  }
+
+  if (!kanHerhalen && soort !== "taak" && !datum) {
     alert("Vul een datum in.");
     return;
   }
+  if (soort === "optie" && !herhaal && !datum) {
+    alert("Vul een datum in, of kies hoe vaak het herhaalt.");
+    return;
+  }
   if (soort === "vrij" && (!einddatum || einddatum < datum)) einddatum = datum;
-  const metTijd = soort === "afspraak" || soort === "toets" || soort === "taak";
+  const metTijd = ["afspraak", "toets", "taak", "optie"].includes(soort);
 
   items.push({
     id: Date.now(),
@@ -646,6 +712,7 @@ function voegToe(event) {
     begintijd: metTijd ? document.getElementById("begintijd").value : "",
     eindtijd: metTijd && soort !== "taak" ? document.getElementById("eindtijd").value : "",
     herhaal: herhaal,
+    herhaalDagen: herhaal === "dagen" ? herhaalDagen : [],
     klaarOp: [],
     klaar: false
   });
@@ -682,19 +749,27 @@ function verwijder(id) {
 // Laat alleen de velden zien die bij de gekozen soort horen
 function pasVeldenAan() {
   const soort = document.getElementById("soort").value;
-  const herhaal = document.getElementById("herhaal").value;
+  const kanHerhalen = soort === "taak" || soort === "optie";
+  const herhaal = kanHerhalen ? document.getElementById("herhaal").value : "";
+
+  let herhaalLabel = "Wanneer (mag leeg)";
+  if (herhaal === "week") herhaalLabel = "Eerste keer op";
+  if (herhaal === "dag" || herhaal === "dagen") herhaalLabel = "Vanaf (mag leeg)";
+  if (soort === "optie" && !herhaal) herhaalLabel = "Datum";
+
   const labels = {
     deadline: "Inleveren op", afspraak: "Datum", doel: "Wil ik halen op",
     vrij: "Van", toets: "Datum", huiswerk: "Af hebben op",
-    taak: herhaal ? "Eerste keer op" : "Wanneer (mag leeg)"
+    taak: herhaalLabel, optie: herhaalLabel
   };
 
   document.getElementById("datum-label").textContent = labels[soort] || "";
   document.getElementById("veld-datum").classList.remove("verborgen");
-  document.getElementById("veld-herhaal").classList.toggle("verborgen", soort !== "taak");
+  document.getElementById("veld-herhaal").classList.toggle("verborgen", !kanHerhalen);
+  document.getElementById("veld-dagen").classList.toggle("verborgen", herhaal !== "dagen");
   document.getElementById("veld-einddatum").classList.toggle("verborgen", soort !== "vrij");
   document.getElementById("veld-tijd").classList.toggle("verborgen",
-    soort !== "afspraak" && soort !== "toets" && soort !== "taak");
+    !["afspraak", "toets", "taak", "optie"].includes(soort));
   // Een taak heeft alleen een begintijd ("om 07:30"), geen eindtijd
   document.getElementById("tijd-tot").classList.toggle("verborgen", soort === "taak");
   document.getElementById("tijd-van-label").textContent = soort === "taak" ? "om" : "van";

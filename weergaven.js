@@ -184,7 +184,8 @@ function verdeelOverBanen(afspraken) {
 
 // Eén blok in het weekrooster
 function maakBlok(afspraak, beginUur, plek, overlaptMet) {
-  const blok = div("blok" + (overlaptMet ? " blok-overlap" : "") + (isToets(afspraak) ? " blok-tentamen" : ""));
+  const blok = div("blok" + (overlaptMet ? " blok-overlap" : "") + (isToets(afspraak) ? " blok-tentamen" : "") +
+    (afspraak.soort === "optie" ? " blok-optie" + (afspraak.klaar ? " klaar" : "") : ""));
   const begin = minuten(afspraak.begintijd);
   const duur = eindMinuten(afspraak) - begin;
 
@@ -195,7 +196,8 @@ function maakBlok(afspraak, beginUur, plek, overlaptMet) {
   if (afspraak.kleur) blok.style.backgroundColor = afspraak.kleur;
 
   const titel = document.createElement("strong");
-  titel.textContent = (overlaptMet ? "⚠️ " : "") + (isToets(afspraak) ? "📝 " : "") + afspraak.titel;
+  titel.textContent = (overlaptMet ? "⚠️ " : "") + (isToets(afspraak) ? "📝 " : "") +
+    (afspraak.soort === "optie" ? "💪 " + (afspraak.klaar ? "✓ " : "") : "") + afspraak.titel;
   blok.appendChild(titel);
 
   const info = document.createElement("span");
@@ -224,6 +226,11 @@ function maakBlok(afspraak, beginUur, plek, overlaptMet) {
 }
 
 // ===== MAAND =====
+// Opties (zoals elke dag gym) laten we in de maand weg, anders staat het in elk vakje
+function zonderOpties() {
+  return alleItems().filter(item => item.soort !== "optie");
+}
+
 function toonMaand() {
   const eerste = startVanMaand(focusDatum);
   const laatste = plusDagen(plusMaanden(eerste, 1), -1);
@@ -236,10 +243,10 @@ function toonMaand() {
     const datums = [];
     for (let datum = eerste; datum <= laatste; datum = plusDagen(datum, 1)) datums.push(datum);
     const lijst = document.createElement("ul");
-    vulDagenLijst(lijst, datums, alleItems());
+    vulDagenLijst(lijst, datums, zonderOpties());
     vak.appendChild(lijst);
   } else {
-    vak.appendChild(maakMaandRooster(eerste, laatste, alleItems()));
+    vak.appendChild(maakMaandRooster(eerste, laatste, zonderOpties()));
   }
 }
 
