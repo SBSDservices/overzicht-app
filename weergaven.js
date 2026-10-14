@@ -35,7 +35,7 @@ function maakChip(item) {
   const soort = isVrij(item) ? "vrij" : item.soort;
   const chip = div("chip chip-" + soort + (item.klaar ? " klaar" : ""));
   let tekst = item.titel;
-  if (heeftTijd(item)) tekst = item.begintijd + " " + tekst;
+  if (heeftTijd(item) || (item.soort === "taak" && item.begintijd)) tekst = item.begintijd + " " + tekst;
   else if (soort !== "afspraak" && soort !== "toets") tekst = ICOON[soort] + " " + tekst;
   if (isToets(item)) tekst = "📝 " + tekst;
 
@@ -304,6 +304,7 @@ function toonJaar() {
     const start = plusMaanden(begin, i);
     const eind = plusDagen(plusMaanden(start, 1), -1);
     const inMaand = alle
+      .filter(item => !item.herhaal) // herhalende taken (zoals elke week wegen) tellen niet mee
       .filter(item => item.datum && item.datum <= eind && (item.einddatum || item.datum) >= start)
       .sort((a, b) => a.datum.localeCompare(b.datum));
 

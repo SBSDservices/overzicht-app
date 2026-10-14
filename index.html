@@ -28,13 +28,20 @@
         <option value="taak">✅ Taak</option>
         <option value="deadline">⏰ Deadline</option>
         <option value="afspraak">📅 Afspraak</option>
-        <option value="toets">📝 Toets / tentamen</option>
+        <option value="toets">📝 Toets / mondeling</option>
         <option value="huiswerk">📖 Huiswerk</option>
         <option value="doel">🎯 Doel</option>
         <option value="vrij">🌴 Vrij / vakantie</option>
       </select>
 
-      <label id="veld-datum" class="veld verborgen">
+      <label id="veld-herhaal" class="veld">
+        <select id="herhaal" aria-label="Herhalen">
+          <option value="">Eén keer</option>
+          <option value="dag">🔁 Elke dag</option>
+          <option value="week">🔁 Elke week</option>
+        </select>
+      </label>
+      <label id="veld-datum" class="veld">
         <span id="datum-label">Datum</span>
         <input id="datum" type="date">
       </label>
@@ -42,8 +49,8 @@
         t/m <input id="einddatum" type="date">
       </label>
       <span id="veld-tijd" class="veld verborgen">
-        van <input id="begintijd" type="time" aria-label="Begintijd">
-        tot <input id="eindtijd" type="time" aria-label="Eindtijd">
+        <span id="tijd-van-label">van</span> <input id="begintijd" type="time" aria-label="Begintijd">
+        <span id="tijd-tot">tot <input id="eindtijd" type="time" aria-label="Eindtijd"></span>
       </span>
 
       <button type="submit">Toevoegen</button>
@@ -76,6 +83,11 @@
     <!-- Weergave "Vandaag" -->
     <section id="weergave-dag">
       <div class="sectie-kop">
+        <h2>✅ Te doen</h2>
+      </div>
+      <ul id="lijst-te-doen"></ul>
+
+      <div class="sectie-kop">
         <h2>📅 Afspraken</h2>
         <select id="periode" aria-label="Periode">
           <option value="1">Alleen vandaag</option>
@@ -84,16 +96,6 @@
         </select>
       </div>
       <ul id="lijst-afspraak"></ul>
-
-      <div class="sectie-kop">
-        <h2>⏰ Deadlines &amp; 📖 huiswerk</h2>
-      </div>
-      <ul id="lijst-deadline"></ul>
-
-      <div class="sectie-kop">
-        <h2>✅ Taken</h2>
-      </div>
-      <ul id="lijst-taak"></ul>
 
       <div class="sectie-kop">
         <h2>🎯 Doelen</h2>

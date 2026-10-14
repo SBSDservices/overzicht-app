@@ -66,6 +66,16 @@ li.dag-kop {
 }
 
 li.dag-kop.is-vandaag { color: #4a3aff; }
+li.dag-kop.te-laat { color: #e03131; }
+
+.alles-af {
+  background-color: #ebfbee;
+  color: #2b8a3e;
+  font-weight: bold;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin: 0 0 8px;
+}
 
 li.leeg-dag {
   background: none;
