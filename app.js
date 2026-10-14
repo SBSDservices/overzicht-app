@@ -18,9 +18,11 @@ let ideeen = laadJson("ideeen", []);
 let googleAfspraken = [];
 
 // Wat je aan het bekijken bent
-let weergave = laadInstelling("weergave", "dag");    // dag, week, maand of jaar
+const PAGINAS = { home: "Home", todo: "To-do", taken: "Takenlijst", agenda: "Agenda", ideeen: "Ideeën" };
+let pagina = PAGINAS[location.hash.slice(1)] ? location.hash.slice(1) : "home"; // bijv. #agenda
+let weergave = laadInstelling("weergave", "week");   // in de agenda: week, maand of jaar
+if (!["week", "maand", "jaar"].includes(weergave)) weergave = "week";
 let stijl = laadInstelling("stijl", "rooster");      // rooster of lijst
-let periode = laadInstelling("periode", "2");        // aantal dagen in "Vandaag"
 let focusDatum = vandaag();                          // welke week/maand/jaar
 let zoekterm = "";
 
@@ -492,21 +494,10 @@ function vulDagenLijst(lijst, datums, alle, { welkeSoorten = null, legeDagenTone
   }
 }
 
-// ===== 5. WEERGAVE "VANDAAG" =====
-function toonDag() {
-  const alle = alleItems();
-
-  // Afspraken en vrije dagen van vandaag (en de komende dagen)
-  const lijst = document.getElementById("lijst-afspraak");
-  lijst.innerHTML = "";
-  const datums = [];
-  for (let i = 0; i < Number(periode); i++) datums.push(plusDagen(vandaag(), i));
-  vulDagenLijst(lijst, datums, alle, { welkeSoorten: ["afspraak", "vrij", "toets"] });
-
-  toonTeDoen();
+// ===== 5. PAGINA "TAKEN": takenlijst en doelen =====
+function toonTaken() {
   toonTakenlijst();
-  toonOpties(alle);
-  toonLijst("lijst-doel", ["doel"], alle);
+  toonLijst("lijst-doel", ["doel"], alleItems());
 }
 
 // ===== "KAN VANDAAG": opties zoals sport (hoeft niet, mag wel) =====
@@ -518,7 +509,9 @@ function toonOpties(alle) {
   const opties = vandaagAlles.filter(item => item.soort === "optie");
   const bezet = vandaagAlles.filter(item => heeftTijd(item) && item.soort !== "optie" && item.eindtijd);
 
-  document.getElementById("blok-optie").classList.toggle("verborgen", opties.length === 0);
+  if (opties.length === 0) {
+    lijst.innerHTML = '<p class="leeg">Niks voor vandaag. Voeg een 💪 optie toe, zoals sporten.</p>';
+  }
 
   for (const optie of opties) {
     const li = maakRegel(optie);
@@ -675,37 +668,61 @@ function toonLijst(lijstId, soorten, alle) {
   for (const item of gekozen) lijst.appendChild(maakRegel(item));
 }
 
-// ===== 6. WISSELEN TUSSEN WEERGAVEN =====
-// Wordt na elke wijziging aangeroepen: tekent de gekozen weergave opnieuw
+// ===== 6. WISSELEN TUSSEN PAGINA'S =====
+// Wordt na elke wijziging aangeroepen: tekent de pagina die open staat opnieuw
 function toonAlles() {
-  // Knoppen bovenin goed zetten
+  // Menu en knoppen goed zetten
+  document.querySelectorAll("[data-pagina]").forEach(knop =>
+    knop.classList.toggle("actief", knop.dataset.pagina === pagina));
+  document.querySelectorAll(".pagina").forEach(sectie =>
+    sectie.classList.toggle("verborgen", sectie.id !== "pagina-" + pagina));
+  document.getElementById("pagina-titel").textContent = PAGINAS[pagina];
+  document.getElementById("zoek").classList.toggle("verborgen", pagina === "home");
+
   document.querySelectorAll("[data-weergave]").forEach(knop =>
     knop.classList.toggle("actief", knop.dataset.weergave === weergave));
   document.querySelectorAll("[data-stijl]").forEach(knop =>
     knop.classList.toggle("actief", knop.dataset.stijl === stijl));
+  document.getElementById("stijl-knoppen").classList.toggle("verborgen", weergave === "jaar");
 
-  const metTijdlijn = weergave === "week" || weergave === "maand" || weergave === "jaar";
-  document.getElementById("navigatie").classList.toggle("verborgen", !metTijdlijn);
-  document.getElementById("stijl-knoppen").classList.toggle("verborgen", weergave !== "week" && weergave !== "maand");
-  document.getElementById("weergave-dag").classList.toggle("verborgen", weergave !== "dag");
-  document.getElementById("weergave-overig").classList.toggle("verborgen", !metTijdlijn);
-  document.getElementById("weergave-ideeen").classList.toggle("verborgen", weergave !== "ideeen");
-  // Het formulier voor taken en afspraken heb je bij Ideeën niet nodig
-  document.getElementById("formulier").classList.toggle("verborgen", weergave === "ideeen");
-
-  if (weergave === "dag") toonDag();
-  if (weergave === "week") toonWeek();     // staat in weergaven.js
-  if (weergave === "maand") toonMaand();   // staat in weergaven.js
-  if (weergave === "jaar") toonJaar();     // staat in weergaven.js
-  if (weergave === "ideeen") toonIdeeen(); // staat in ideeen.js
+  if (pagina === "home") toonHome();         // staat in home.js
+  if (pagina === "todo") toonTeDoen();
+  if (pagina === "taken") toonTaken();
+  if (pagina === "ideeen") toonIdeeen();     // staat in ideeen.js
+  if (pagina === "agenda") {
+    if (weergave === "week") toonWeek();     // staat in weergaven.js
+    if (weergave === "maand") toonMaand();
+    if (weergave === "jaar") toonJaar();
+  }
 
   vernieuwLesVenster();  // staat in lessen.js
 }
 
+function kiesPagina(nieuw) {
+  if (!PAGINAS[nieuw]) nieuw = "home";
+  pagina = nieuw;
+  // Het adres krijgt #agenda enz., zodat de terug-knop van je telefoon werkt
+  if (location.hash !== "#" + pagina) history.pushState(null, "", "#" + pagina);
+  toonAlles();
+  window.scrollTo(0, 0);
+}
+
+// Week, maand of jaar in de agenda
 function kiesWeergave(nieuw) {
   weergave = nieuw;
   bewaarInstelling("weergave", weergave);
-  toonAlles();
+  if (pagina !== "agenda") kiesPagina("agenda");
+  else toonAlles();
+}
+
+// ----- Het toevoeg-venster -----
+function openToevoegen() {
+  // Kies alvast de soort die past bij de pagina waar je bent
+  const standaard = { todo: "deadline", taken: "taak", agenda: "afspraak", home: "taak" };
+  if (standaard[pagina]) document.getElementById("soort").value = standaard[pagina];
+  pasVeldenAan();
+  document.getElementById("toevoeg-venster").showModal();
+  document.getElementById("titel").focus();
 }
 
 function kiesStijl(nieuw) {
@@ -785,9 +802,9 @@ function voegToe(event) {
   bewaarItems();
   toonAlles();
 
-  // Formulier leegmaken voor het volgende item
+  // Formulier leegmaken voor de volgende keer, en het venster sluiten
   document.getElementById("titel").value = "";
-  document.getElementById("titel").focus();
+  document.getElementById("toevoeg-venster").close();
 }
 
 // Afvinken. Bij een herhalende taak onthouden we op wélke dag je hem af hebt.
@@ -842,12 +859,6 @@ function pasVeldenAan() {
   document.getElementById("tijd-van-label").textContent = soort === "taak" ? "om" : "van";
 }
 
-function kiesPeriode() {
-  periode = document.getElementById("periode").value;
-  bewaarInstelling("periode", periode);
-  toonAlles();
-}
-
 function zoek() {
   zoekterm = document.getElementById("zoek").value.trim().toLowerCase();
   toonAlles();
@@ -857,9 +868,25 @@ function zoek() {
 document.getElementById("formulier").addEventListener("submit", voegToe);
 document.getElementById("soort").addEventListener("change", pasVeldenAan);
 document.getElementById("herhaal").addEventListener("change", pasVeldenAan);
-document.getElementById("periode").addEventListener("change", kiesPeriode);
-document.getElementById("periode").value = periode;
 document.getElementById("zoek").addEventListener("input", zoek);
+document.getElementById("toevoegen-knop").addEventListener("click", openToevoegen);
+document.querySelectorAll("[data-pagina]").forEach(knop =>
+  knop.addEventListener("click", () => kiesPagina(knop.dataset.pagina)));
+document.querySelectorAll("[data-ga-naar]").forEach(knop =>
+  knop.addEventListener("click", () => kiesPagina(knop.dataset.gaNaar)));
+// Venster groter of kleiner gemaakt? Dan het rooster opnieuw passend maken
+let herschaalTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(herschaalTimer);
+  herschaalTimer = setTimeout(() => {
+    if (pagina === "agenda" && weergave === "week") toonAlles();
+  }, 200);
+});
+// De terug-knop van je browser of telefoon
+window.addEventListener("popstate", () => {
+  pagina = PAGINAS[location.hash.slice(1)] ? location.hash.slice(1) : "home";
+  toonAlles();
+});
 document.getElementById("vorige").addEventListener("click", () => blader(-1));
 document.getElementById("volgende").addEventListener("click", () => blader(1));
 document.getElementById("naar-vandaag").addEventListener("click", naarVandaag);

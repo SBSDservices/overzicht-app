@@ -1,7 +1,9 @@
 // ===== WEERGAVEN: WEEK, MAAND EN JAAR =====
 // Deze functies gebruiken de hulpfuncties uit app.js (zoals itemsOpDag en plusDagen)
 
-const UUR_HOOGTE = 48; // hoeveel pixels één uur hoog is in het weekrooster
+// Hoeveel pixels één uur hoog is in het weekrooster.
+// Dit wordt elke keer uitgerekend, zodat je hele week op je scherm past.
+let UUR_HOOGTE = 48;
 
 // Klein hulpje: maak een <div> met een class
 function div(className) {
@@ -74,15 +76,29 @@ function maakWeekRooster(datums, alle) {
   // Huiswerk dat bij een les hoort staat al óp die les, dus niet nog eens bovenin
   const zonderTijd = perDag.map(lijst => lijst.filter(item => !heeftTijd(item) && !item.bijLes));
 
-  // Welke uren laten we zien? Standaard 8:00–22:00, meer als dat nodig is
-  let beginUur = 8;
-  let eindUur = 22;
+  // Welke uren laten we zien? Alleen van je eerste tot je laatste afspraak van de week
+  let beginUur = 24;
+  let eindUur = 0;
   for (const lijst of metTijd) {
     for (const afspraak of lijst) {
       beginUur = Math.min(beginUur, Math.floor(minuten(afspraak.begintijd) / 60));
       eindUur = Math.max(eindUur, Math.ceil(eindMinuten(afspraak) / 60));
     }
   }
+  if (beginUur >= eindUur) {
+    // Niks met een tijd deze week: laat een gewone dag zien
+    beginUur = 9;
+    eindUur = 17;
+  }
+  // Minstens 6 uur laten zien, anders ziet het er vreemd uit
+  while (eindUur - beginUur < 6) {
+    if (eindUur < 24) eindUur++;
+    else beginUur--;
+  }
+
+  // Zo hoog maken dat alles op je scherm past (maar niet te klein of te groot)
+  const ruimte = window.innerHeight - 300; // ruimte voor menu, knoppen en dagnamen
+  UUR_HOOGTE = Math.max(26, Math.min(56, Math.floor(ruimte / (eindUur - beginUur))));
   const hoogte = (eindUur - beginUur) * UUR_HOOGTE;
 
   const scroll = div("rooster-scroll");
@@ -189,8 +205,10 @@ function maakBlok(afspraak, beginUur, plek, overlaptMet) {
   const begin = minuten(afspraak.begintijd);
   const duur = eindMinuten(afspraak) - begin;
 
+  const blokHoogte = Math.max(duur / 60 * UUR_HOOGTE - 2, 16);
   blok.style.top = (begin - beginUur * 60) / 60 * UUR_HOOGTE + "px";
-  blok.style.height = Math.max(duur / 60 * UUR_HOOGTE - 2, 18) + "px";
+  blok.style.height = blokHoogte + "px";
+  if (blokHoogte < 34) blok.classList.add("blok-klein"); // te klein voor 2 regels: alleen de titel
   blok.style.left = "calc(" + (plek.baan / plek.totaal * 100) + "% + 2px)";
   blok.style.width = "calc(" + (100 / plek.totaal) + "% - 4px)";
   if (afspraak.kleur) blok.style.backgroundColor = afspraak.kleur;

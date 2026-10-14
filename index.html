@@ -9,9 +9,27 @@
 </head>
 
 <body>
-  <header>
-    <h1>Mijn Overzicht</h1>
-    <p id="datum-vandaag" class="info"></p>
+  <!-- Het menu: links op de laptop, onderin op je telefoon -->
+  <nav id="menu">
+    <div class="menu-logo">Mijn Overzicht</div>
+    <button data-pagina="home"><span class="menu-icoon">🏠</span><span>Home</span></button>
+    <button data-pagina="todo"><span class="menu-icoon">✅</span><span>To-do</span></button>
+    <button data-pagina="taken"><span class="menu-icoon">📋</span><span>Taken</span></button>
+    <button data-pagina="agenda"><span class="menu-icoon">📅</span><span>Agenda</span></button>
+    <button data-pagina="ideeen"><span class="menu-icoon">💡</span><span>Ideeën</span></button>
+  </nav>
+
+  <div id="inhoud">
+    <header id="kopbalk">
+      <div>
+        <h1 id="pagina-titel">Home</h1>
+        <p id="datum-vandaag" class="info"></p>
+      </div>
+      <div class="kop-acties">
+        <input id="zoek" type="search" placeholder="🔍 Zoeken…" aria-label="Zoeken">
+        <button id="toevoegen-knop" class="hoofdknop">➕ Toevoegen</button>
+      </div>
+    </header>
 
     <!-- Verbinding met Google (agenda + taken synchroniseren) -->
     <div id="google-balk">
@@ -20,13 +38,162 @@
       <button id="google-uitlog" class="verborgen" onclick="logUit()">Uitloggen</button>
     </div>
 
-    <!-- Formulier om iets nieuws toe te voegen -->
+    <main>
+      <!-- ===== HOME: het dashboard ===== -->
+      <section id="pagina-home" class="pagina">
+        <div id="dash-samenvatting" class="samenvatting"></div>
+
+        <div class="dashboard">
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2>📅 Vandaag</h2>
+              <button class="link-knop" data-ga-naar="agenda">Agenda →</button>
+            </div>
+            <ul id="dash-vandaag" class="compact"></ul>
+          </div>
+
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2>✅ Te doen</h2>
+              <button class="link-knop" data-ga-naar="todo">Alles →</button>
+            </div>
+            <ul id="dash-todo" class="compact"></ul>
+          </div>
+
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2>🔥 Belangrijk</h2>
+              <button class="link-knop" data-ga-naar="taken">Takenlijst →</button>
+            </div>
+            <ul id="dash-belangrijk" class="compact"></ul>
+          </div>
+
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2>📝 Toetsen &amp; deadlines</h2>
+              <span class="info">komende 2 weken</span>
+            </div>
+            <ul id="dash-binnenkort" class="compact"></ul>
+          </div>
+
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2>💪 Kan vandaag</h2>
+              <span class="info">hoeft niet, mag wel</span>
+            </div>
+            <ul id="lijst-optie" class="compact"></ul>
+          </div>
+
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2>💡 Laatste ideeën</h2>
+              <button class="link-knop" data-ga-naar="ideeen">Ideeën →</button>
+            </div>
+            <ul id="dash-ideeen" class="compact"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TO-DO: alles met een datum ===== -->
+      <section id="pagina-todo" class="pagina smal">
+        <p class="info pagina-uitleg">Alles met een datum: huiswerk, toetsen, opdrachten en taken.</p>
+        <ul id="lijst-te-doen"></ul>
+      </section>
+
+      <!-- ===== TAKEN: zonder deadline, plus doelen ===== -->
+      <section id="pagina-taken" class="pagina smal">
+        <p class="info pagina-uitleg">Dingen zonder deadline die wel moeten gebeuren. Klik op 🔥 / ☆ / 💤 om te kiezen hoe belangrijk.</p>
+        <ul id="lijst-takenlijst"></ul>
+
+        <div class="sectie-kop">
+          <h2>🎯 Doelen</h2>
+        </div>
+        <ul id="lijst-doel"></ul>
+      </section>
+
+      <!-- ===== AGENDA: week, maand, jaar ===== -->
+      <section id="pagina-agenda" class="pagina">
+        <div id="werkbalk">
+          <div class="schakelaar">
+            <button data-weergave="week">Week</button>
+            <button data-weergave="maand">Maand</button>
+            <button data-weergave="jaar">Jaar</button>
+          </div>
+          <div id="navigatie">
+            <button id="vorige" title="Vorige">‹</button>
+            <button id="volgende" title="Volgende">›</button>
+            <button id="naar-vandaag">Vandaag</button>
+            <span id="periode-titel"></span>
+          </div>
+          <div id="stijl-knoppen" class="schakelaar">
+            <button data-stijl="rooster">Rooster</button>
+            <button data-stijl="lijst">Lijst</button>
+          </div>
+        </div>
+        <div id="weergave-overig"></div>
+      </section>
+
+      <!-- ===== IDEEËN ===== -->
+      <section id="pagina-ideeen" class="pagina">
+        <div class="ideeen-balk">
+          <div class="schakelaar">
+            <button data-categorie="alles">Alles</button>
+            <button data-categorie="business">💼 Business</button>
+            <button data-categorie="ai">🤖 AI &amp; leren</button>
+            <button data-categorie="overig">💡 Overig</button>
+          </div>
+          <button id="nieuw-idee" class="hoofdknop">➕ Nieuw idee</button>
+        </div>
+
+        <div id="ideeen-layout">
+          <ul id="ideeen-lijst"></ul>
+
+          <div id="idee-editor" class="verborgen">
+            <div class="idee-kop">
+              <button id="idee-sluiten" class="link-knop">← Alle ideeën</button>
+              <select id="idee-categorie" aria-label="Categorie">
+                <option value="business">💼 Business-idee</option>
+                <option value="ai">🤖 AI &amp; leren</option>
+                <option value="overig">💡 Overig</option>
+              </select>
+            </div>
+
+            <input id="idee-titel" placeholder="Titel, bijv. 'Gepersonaliseerde sportschema's met AI'">
+
+            <h4>🔗 Video's en links</h4>
+            <ul id="idee-links"></ul>
+            <form id="idee-link-formulier">
+              <input id="idee-link-url" placeholder="Plak hier een link van TikTok, Instagram, YouTube…" required>
+              <input id="idee-link-notitie" placeholder="Waar gaat het over? (mag leeg)">
+              <button type="submit">Link opslaan</button>
+            </form>
+
+            <h4>✍️ Uitwerking</h4>
+            <textarea id="idee-tekst" placeholder="Werk je idee hier uit. Bijvoorbeeld:&#10;- Wat is het probleem?&#10;- Voor wie is het?&#10;- Hoe verdien je eraan?&#10;- Wat is de eerste stap?"></textarea>
+
+            <div class="idee-voet">
+              <span id="idee-opgeslagen" class="info"></span>
+              <button id="idee-verwijder" class="link-knop gevaar">🗑️ Idee verwijderen</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Het venster om iets toe te voegen -->
+  <dialog id="toevoeg-venster">
+    <form method="dialog">
+      <button class="venster-sluiten" title="Sluiten">✕</button>
+    </form>
+    <h3>➕ Toevoegen</h3>
+
     <form id="formulier">
       <input id="titel" placeholder="Wat moet je doen of waar moet je zijn?" required>
 
-      <select id="soort">
+      <select id="soort" aria-label="Soort">
         <option value="taak">✅ Taak</option>
-        <option value="deadline">⏰ Deadline</option>
+        <option value="deadline">⏰ Deadline / opdracht</option>
         <option value="afspraak">📅 Afspraak</option>
         <option value="toets">📝 Toets / mondeling</option>
         <option value="huiswerk">📖 Huiswerk</option>
@@ -73,118 +240,7 @@
 
       <button type="submit">Toevoegen</button>
     </form>
-
-    <!-- Kiezen wat je wilt zien -->
-    <nav class="tabs">
-      <button data-weergave="dag">Vandaag</button>
-      <button data-weergave="week">Week</button>
-      <button data-weergave="maand">Maand</button>
-      <button data-weergave="jaar">Jaar</button>
-      <button data-weergave="ideeen">💡 Ideeën</button>
-    </nav>
-
-    <div id="werkbalk">
-      <div id="navigatie">
-        <button id="vorige" title="Vorige">‹</button>
-        <button id="volgende" title="Volgende">›</button>
-        <button id="naar-vandaag">Vandaag</button>
-        <span id="periode-titel"></span>
-      </div>
-      <div id="stijl-knoppen" class="schakelaar">
-        <button data-stijl="rooster">Rooster</button>
-        <button data-stijl="lijst">Lijst</button>
-      </div>
-      <input id="zoek" type="search" placeholder="🔍 Zoeken…" aria-label="Zoeken">
-    </div>
-  </header>
-
-  <main>
-    <!-- Weergave "Vandaag" -->
-    <section id="weergave-dag">
-      <div class="sectie-kop">
-        <h2>✅ Te doen</h2>
-      </div>
-      <ul id="lijst-te-doen"></ul>
-
-      <div class="sectie-kop">
-        <h2>📋 Takenlijst</h2>
-        <span class="info">geen deadline, wel doen</span>
-      </div>
-      <ul id="lijst-takenlijst"></ul>
-
-      <div id="blok-optie" class="verborgen">
-        <div class="sectie-kop">
-          <h2>💪 Kan vandaag</h2>
-          <span class="info">hoeft niet, mag wel</span>
-        </div>
-        <ul id="lijst-optie"></ul>
-      </div>
-
-      <div class="sectie-kop">
-        <h2>📅 Afspraken</h2>
-        <select id="periode" aria-label="Periode">
-          <option value="1">Alleen vandaag</option>
-          <option value="2">Vandaag &amp; morgen</option>
-          <option value="7">Komende 7 dagen</option>
-        </select>
-      </div>
-      <ul id="lijst-afspraak"></ul>
-
-      <div class="sectie-kop">
-        <h2>🎯 Doelen</h2>
-      </div>
-      <ul id="lijst-doel"></ul>
-    </section>
-
-    <!-- Weergave Week, Maand of Jaar (wordt door weergaven.js gevuld) -->
-    <section id="weergave-overig" class="verborgen"></section>
-
-    <!-- Weergave Ideeën (wordt door ideeen.js gevuld) -->
-    <section id="weergave-ideeen" class="verborgen">
-      <div class="ideeen-balk">
-        <div class="schakelaar">
-          <button data-categorie="alles">Alles</button>
-          <button data-categorie="business">💼 Business</button>
-          <button data-categorie="ai">🤖 AI &amp; leren</button>
-          <button data-categorie="overig">💡 Overig</button>
-        </div>
-        <button id="nieuw-idee" class="hoofdknop">➕ Nieuw idee</button>
-      </div>
-
-      <div id="ideeen-layout">
-        <ul id="ideeen-lijst"></ul>
-
-        <div id="idee-editor" class="verborgen">
-          <div class="idee-kop">
-            <button id="idee-sluiten" class="link-knop">← Alle ideeën</button>
-            <select id="idee-categorie" aria-label="Categorie">
-              <option value="business">💼 Business-idee</option>
-              <option value="ai">🤖 AI &amp; leren</option>
-              <option value="overig">💡 Overig</option>
-            </select>
-          </div>
-
-          <input id="idee-titel" placeholder="Titel, bijv. 'Gepersonaliseerde sportschema's met AI'">
-
-          <h4>🔗 Video's en links</h4>
-          <ul id="idee-links"></ul>
-          <form id="idee-link-formulier">
-            <input id="idee-link-url" placeholder="Plak hier een link van TikTok, Instagram, YouTube…" required>
-            <input id="idee-link-notitie" placeholder="Waar gaat het over? (mag leeg)">
-            <button type="submit">Link opslaan</button>
-          </form>
-
-          <h4>✍️ Uitwerking</h4>
-          <textarea id="idee-tekst" placeholder="Werk je idee hier uit. Bijvoorbeeld:&#10;- Wat is het probleem?&#10;- Voor wie is het?&#10;- Hoe verdien je eraan?&#10;- Wat is de eerste stap?"></textarea>
-
-          <div class="idee-voet">
-            <span id="idee-opgeslagen" class="info"></span>
-            <button id="idee-verwijder" class="link-knop gevaar">🗑️ Idee verwijderen</button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+  </dialog>
 
   <!-- Het venster dat opent als je op een les klikt -->
   <dialog id="les-venster">
@@ -214,6 +270,7 @@
   <script src="weergaven.js"></script>
   <script src="lessen.js"></script>
   <script src="ideeen.js"></script>
+  <script src="home.js"></script>
   <script src="app.js"></script>
   <script src="google.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="startGoogle()"></script>
