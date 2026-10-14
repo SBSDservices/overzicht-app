@@ -10,6 +10,10 @@ let items = laadJson("items", []);
 // (vroeger heette dit "lesVakken"; dat nemen we over als het er nog is)
 let lesNamen = { ...laadJson("lesVakken", {}), ...laadJson("lesNamen", {}) };
 
+// Je ideeën (zie ideeen.js). Elk idee:
+// { id, titel, categorie, tekst, links: [{ url, notitie }], aangemaakt, bijgewerkt }
+let ideeen = laadJson("ideeen", []);
+
 // Afspraken uit je Google Agenda (worden ingevuld door google.js)
 let googleAfspraken = [];
 
@@ -37,6 +41,7 @@ function bewaarLokaal() {
   try {
     localStorage.setItem("items", JSON.stringify(items));
     localStorage.setItem("lesNamen", JSON.stringify(lesNamen));
+    localStorage.setItem("ideeen", JSON.stringify(ideeen));
   } catch {
     console.warn("Opslaan lukt niet in deze browser");
   }
@@ -395,8 +400,32 @@ function maakRegel(item) {
   if (item.datum) tekst.appendChild(maakDatumInfo(item));
   li.appendChild(tekst);
 
+  // Taken zonder datum: knopje om te kiezen hoe belangrijk ze zijn
+  if (item.soort === "taak" && !item.datum) li.appendChild(maakPrioriteitKnop(item));
+
   li.appendChild(maakVerwijderKnop(id));
   return li;
+}
+
+const PRIORITEIT = {
+  hoog:   { icoon: "🔥", titel: "Belangrijk", volgende: "laag" },
+  normaal:{ icoon: "☆",  titel: "Normaal", volgende: "hoog" },
+  laag:   { icoon: "💤", titel: "Als ik tijd heb", volgende: "normaal" }
+};
+
+function maakPrioriteitKnop(item) {
+  const prioriteit = PRIORITEIT[item.prioriteit || "normaal"];
+  const knop = document.createElement("button");
+  knop.className = "prioriteit-knop";
+  knop.textContent = prioriteit.icoon;
+  knop.title = prioriteit.titel + " (klik om te wijzigen)";
+  knop.onclick = () => {
+    const echt = items.find(ander => ander.id === item.id);
+    echt.prioriteit = prioriteit.volgende;
+    bewaarItems();
+    toonAlles();
+  };
+  return knop;
 }
 
 // Het grijze stukje achter een item, zoals "· vr 9 okt · nog 2 dagen"
@@ -475,6 +504,7 @@ function toonDag() {
   vulDagenLijst(lijst, datums, alle, { welkeSoorten: ["afspraak", "vrij", "toets"] });
 
   toonTeDoen();
+  toonTakenlijst();
   toonOpties(alle);
   toonLijst("lijst-doel", ["doel"], alle);
 }
@@ -518,8 +548,7 @@ const GROEPEN = [
   { sleutel: "vandaag", titel: "Vandaag" },
   { sleutel: "morgen", titel: "Morgen" },
   { sleutel: "week", titel: "Deze week" },
-  { sleutel: "later", titel: "Later" },
-  { sleutel: "ooit", titel: "Zonder datum" }
+  { sleutel: "later", titel: "Later" }
 ];
 
 function toonTeDoen() {
@@ -573,16 +602,46 @@ function toonTeDoen() {
     for (const item of groep) lijst.appendChild(maakRegel(item));
   }
 
-  if (teDoen.length === 0 || lijst.children.length === 0) {
-    lijst.innerHTML = '<p class="leeg">Niks te doen. Voeg hierboven iets toe.</p>';
+  if (lijst.children.length === 0) {
+    lijst.innerHTML = '<p class="leeg">Niks met een datum te doen. Voeg hierboven iets toe.</p>';
   } else if (open === 0) {
     lijst.insertAdjacentHTML("afterbegin", '<p class="alles-af">🎉 Alles is af!</p>');
   }
 }
 
+// ===== TAKENLIJST: dingen zonder datum, op volgorde van hoe belangrijk =====
+function toonTakenlijst() {
+  const lijst = document.getElementById("lijst-takenlijst");
+  lijst.innerHTML = "";
+
+  // Afgevinkte taken laten we nog 2 dagen zien, daarna verdwijnen ze
+  const tweeDagenGeleden = Date.now() - 2 * 86400000;
+  const taken = items.filter(item =>
+    item.soort === "taak" && !item.datum && pastBijZoeken(item) &&
+    !(item.klaar && (item.klaarSinds || 0) < tweeDagenGeleden));
+
+  for (const sleutel of ["hoog", "normaal", "laag"]) {
+    const groep = taken.filter(item => (item.prioriteit || "normaal") === sleutel);
+    if (groep.length === 0) continue;
+    groep.sort((a, b) => a.klaar - b.klaar || a.id - b.id);
+
+    const nogOpen = groep.filter(item => !item.klaar).length;
+    const kop = document.createElement("li");
+    kop.className = "dag-kop" + (sleutel === "hoog" ? " te-laat" : "");
+    kop.textContent = PRIORITEIT[sleutel].icoon + " " + PRIORITEIT[sleutel].titel + (nogOpen ? " · " + nogOpen : " · ✓");
+    lijst.appendChild(kop);
+
+    for (const item of groep) lijst.appendChild(maakRegel(item));
+  }
+
+  if (taken.length === 0) {
+    lijst.innerHTML = '<p class="leeg">Leeg. Kies bovenin "✅ Taak" zonder datum om iets toe te voegen.</p>';
+  }
+}
+
 // In welke groep hoort een item? (null = niet laten zien)
 function groepVoor(item) {
-  if (!item.datum) return "ooit";
+  if (!item.datum) return null; // die staan in de takenlijst
 
   const dagen = dagenTot(item.datum);
   if (dagen < 0) {
@@ -625,15 +684,20 @@ function toonAlles() {
   document.querySelectorAll("[data-stijl]").forEach(knop =>
     knop.classList.toggle("actief", knop.dataset.stijl === stijl));
 
-  document.getElementById("navigatie").classList.toggle("verborgen", weergave === "dag");
-  document.getElementById("stijl-knoppen").classList.toggle("verborgen", weergave === "dag" || weergave === "jaar");
+  const metTijdlijn = weergave === "week" || weergave === "maand" || weergave === "jaar";
+  document.getElementById("navigatie").classList.toggle("verborgen", !metTijdlijn);
+  document.getElementById("stijl-knoppen").classList.toggle("verborgen", weergave !== "week" && weergave !== "maand");
   document.getElementById("weergave-dag").classList.toggle("verborgen", weergave !== "dag");
-  document.getElementById("weergave-overig").classList.toggle("verborgen", weergave === "dag");
+  document.getElementById("weergave-overig").classList.toggle("verborgen", !metTijdlijn);
+  document.getElementById("weergave-ideeen").classList.toggle("verborgen", weergave !== "ideeen");
+  // Het formulier voor taken en afspraken heb je bij Ideeën niet nodig
+  document.getElementById("formulier").classList.toggle("verborgen", weergave === "ideeen");
 
   if (weergave === "dag") toonDag();
-  if (weergave === "week") toonWeek();   // staat in weergaven.js
-  if (weergave === "maand") toonMaand(); // staat in weergaven.js
-  if (weergave === "jaar") toonJaar();   // staat in weergaven.js
+  if (weergave === "week") toonWeek();     // staat in weergaven.js
+  if (weergave === "maand") toonMaand();   // staat in weergaven.js
+  if (weergave === "jaar") toonJaar();     // staat in weergaven.js
+  if (weergave === "ideeen") toonIdeeen(); // staat in ideeen.js
 
   vernieuwLesVenster();  // staat in lessen.js
 }
@@ -713,6 +777,7 @@ function voegToe(event) {
     eindtijd: metTijd && soort !== "taak" ? document.getElementById("eindtijd").value : "",
     herhaal: herhaal,
     herhaalDagen: herhaal === "dagen" ? herhaalDagen : [],
+    prioriteit: soort === "taak" ? document.getElementById("prioriteit").value : "",
     klaarOp: [],
     klaar: false
   });
@@ -733,6 +798,7 @@ function vinkAf(id, datum) {
     item.klaarOp = klaarOp.includes(datum) ? klaarOp.filter(d => d !== datum) : klaarOp.concat(datum);
   } else {
     item.klaar = !item.klaar;
+    item.klaarSinds = item.klaar ? Date.now() : 0;
   }
   bewaarItems();
   toonAlles();
@@ -767,6 +833,7 @@ function pasVeldenAan() {
   document.getElementById("veld-datum").classList.remove("verborgen");
   document.getElementById("veld-herhaal").classList.toggle("verborgen", !kanHerhalen);
   document.getElementById("veld-dagen").classList.toggle("verborgen", herhaal !== "dagen");
+  document.getElementById("veld-prioriteit").classList.toggle("verborgen", soort !== "taak" || herhaal !== "");
   document.getElementById("veld-einddatum").classList.toggle("verborgen", soort !== "vrij");
   document.getElementById("veld-tijd").classList.toggle("verborgen",
     !["afspraak", "toets", "taak", "optie"].includes(soort));

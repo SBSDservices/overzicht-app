@@ -655,6 +655,155 @@ li.optie.botst { background-color: #fff9f5; }
   gap: 4px;
 }
 
+/* ===== Takenlijst ===== */
+.prioriteit-knop {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 4px;
+  opacity: 0.8;
+}
+
+.prioriteit-knop:hover { opacity: 1; transform: scale(1.15); }
+
+/* ===== Ideeën ===== */
+.ideeen-balk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.hoofdknop {
+  background-color: #4a3aff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#ideeen-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+/* Op een groot scherm: lijst links, idee rechts */
+@media (min-width: 800px) {
+  #ideeen-layout.editor-open {
+    grid-template-columns: 300px 1fr;
+  }
+}
+
+.idee-kaart {
+  display: block;
+  cursor: pointer;
+  border-left-color: #f08c00;
+}
+
+.idee-kaart:hover { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
+.idee-kaart.actief { outline: 2px solid #4a3aff; }
+
+.idee-kaart strong, .idee-kaart .info, .idee-stukje {
+  display: block;
+}
+
+.idee-stukje {
+  font-size: 13px;
+  color: #555;
+  margin-top: 4px;
+  white-space: pre-line;
+  overflow: hidden;
+  max-height: 3.6em;
+}
+
+#idee-editor {
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px;
+  align-self: start;
+}
+
+.idee-kop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+#idee-titel {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  border-bottom: 2px solid #eee;
+  border-radius: 0;
+  padding: 6px 0;
+}
+
+#idee-titel:focus { outline: none; border-bottom-color: #4a3aff; }
+
+#idee-editor h4 {
+  margin: 20px 0 8px;
+  font-size: 15px;
+}
+
+#idee-link-formulier {
+  padding: 0;
+  margin: 0;
+}
+
+#idee-link-url { flex: 1 1 100%; }
+#idee-link-notitie { flex: 1; min-width: 150px; }
+
+.idee-link {
+  background-color: #f8f9fa;
+  border-left-color: #f08c00;
+}
+
+.idee-link a {
+  font-weight: bold;
+  color: #4a3aff;
+}
+
+.link-adres {
+  display: block;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.idee-link .tekst { min-width: 0; }
+
+#idee-tekst {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 200px;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.idee-voet {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.link-knop.gevaar { color: #e03131; }
+
 /* ===== Telefoon ===== */
 @media (max-width: 600px) {
   body { margin-top: 16px; }

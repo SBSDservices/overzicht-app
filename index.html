@@ -52,6 +52,13 @@
         <label><input type="checkbox" value="6"> za</label>
         <label><input type="checkbox" value="0"> zo</label>
       </span>
+      <label id="veld-prioriteit" class="veld">
+        <select id="prioriteit" aria-label="Hoe belangrijk">
+          <option value="normaal">☆ Normaal</option>
+          <option value="hoog">🔥 Belangrijk</option>
+          <option value="laag">💤 Als ik tijd heb</option>
+        </select>
+      </label>
       <label id="veld-datum" class="veld">
         <span id="datum-label">Datum</span>
         <input id="datum" type="date">
@@ -73,6 +80,7 @@
       <button data-weergave="week">Week</button>
       <button data-weergave="maand">Maand</button>
       <button data-weergave="jaar">Jaar</button>
+      <button data-weergave="ideeen">💡 Ideeën</button>
     </nav>
 
     <div id="werkbalk">
@@ -97,6 +105,12 @@
         <h2>✅ Te doen</h2>
       </div>
       <ul id="lijst-te-doen"></ul>
+
+      <div class="sectie-kop">
+        <h2>📋 Takenlijst</h2>
+        <span class="info">geen deadline, wel doen</span>
+      </div>
+      <ul id="lijst-takenlijst"></ul>
 
       <div id="blok-optie" class="verborgen">
         <div class="sectie-kop">
@@ -124,6 +138,52 @@
 
     <!-- Weergave Week, Maand of Jaar (wordt door weergaven.js gevuld) -->
     <section id="weergave-overig" class="verborgen"></section>
+
+    <!-- Weergave Ideeën (wordt door ideeen.js gevuld) -->
+    <section id="weergave-ideeen" class="verborgen">
+      <div class="ideeen-balk">
+        <div class="schakelaar">
+          <button data-categorie="alles">Alles</button>
+          <button data-categorie="business">💼 Business</button>
+          <button data-categorie="ai">🤖 AI &amp; leren</button>
+          <button data-categorie="overig">💡 Overig</button>
+        </div>
+        <button id="nieuw-idee" class="hoofdknop">➕ Nieuw idee</button>
+      </div>
+
+      <div id="ideeen-layout">
+        <ul id="ideeen-lijst"></ul>
+
+        <div id="idee-editor" class="verborgen">
+          <div class="idee-kop">
+            <button id="idee-sluiten" class="link-knop">← Alle ideeën</button>
+            <select id="idee-categorie" aria-label="Categorie">
+              <option value="business">💼 Business-idee</option>
+              <option value="ai">🤖 AI &amp; leren</option>
+              <option value="overig">💡 Overig</option>
+            </select>
+          </div>
+
+          <input id="idee-titel" placeholder="Titel, bijv. 'Gepersonaliseerde sportschema's met AI'">
+
+          <h4>🔗 Video's en links</h4>
+          <ul id="idee-links"></ul>
+          <form id="idee-link-formulier">
+            <input id="idee-link-url" placeholder="Plak hier een link van TikTok, Instagram, YouTube…" required>
+            <input id="idee-link-notitie" placeholder="Waar gaat het over? (mag leeg)">
+            <button type="submit">Link opslaan</button>
+          </form>
+
+          <h4>✍️ Uitwerking</h4>
+          <textarea id="idee-tekst" placeholder="Werk je idee hier uit. Bijvoorbeeld:&#10;- Wat is het probleem?&#10;- Voor wie is het?&#10;- Hoe verdien je eraan?&#10;- Wat is de eerste stap?"></textarea>
+
+          <div class="idee-voet">
+            <span id="idee-opgeslagen" class="info"></span>
+            <button id="idee-verwijder" class="link-knop gevaar">🗑️ Idee verwijderen</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- Het venster dat opent als je op een les klikt -->
@@ -153,6 +213,7 @@
   <!-- De JavaScript-bestanden -->
   <script src="weergaven.js"></script>
   <script src="lessen.js"></script>
+  <script src="ideeen.js"></script>
   <script src="app.js"></script>
   <script src="google.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="startGoogle()"></script>

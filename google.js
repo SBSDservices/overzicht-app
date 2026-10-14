@@ -242,7 +242,17 @@ async function haalTakenOp() {
   const driveNamen = data.lesNamen || data.lesVakken; // lesVakken: van een oudere versie
   if (driveNamen) lesNamen = { ...lesNamen, ...driveNamen };
 
-  const moetOpslaan = nieuwHier.length || oudFormaat || !data.lesNamen;
+  // Ideeën: per idee winnen de nieuwste wijzigingen (hier of op Drive)
+  const driveIdeeen = data.ideeen || [];
+  const hierGewijzigd = ideeen.filter(idee => idee.bijgewerkt > sinds);
+  const samen = new Map(driveIdeeen.map(idee => [idee.id, idee]));
+  for (const idee of hierGewijzigd) {
+    const opDrive = samen.get(idee.id);
+    if (!opDrive || idee.bijgewerkt > opDrive.bijgewerkt) samen.set(idee.id, idee);
+  }
+  ideeen = [...samen.values()];
+
+  const moetOpslaan = nieuwHier.length || oudFormaat || !data.lesNamen || hierGewijzigd.length;
   if (moetOpslaan) {
     bewaarItems(); // stuurt het ook naar Drive
   } else {
@@ -253,7 +263,7 @@ async function haalTakenOp() {
 
 // Wat we in je Drive opslaan
 function driveInhoud() {
-  return JSON.stringify({ versie: 3, items: items, lesNamen: lesNamen });
+  return JSON.stringify({ versie: 4, items: items, lesNamen: lesNamen, ideeen: ideeen });
 }
 
 async function maakDriveBestand() {
