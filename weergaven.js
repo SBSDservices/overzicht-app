@@ -38,7 +38,7 @@ function maakChip(item) {
   const chip = div("chip chip-" + soort + (item.klaar ? " klaar" : ""));
   let tekst = (item.planId && item.vak ? item.vak + ": " : "") + item.titel; // bijv. "Bedrijfsmanagement: Hoofdstuk 1…"
   if (heeftTijd(item) || (item.soort === "taak" && item.begintijd)) tekst = item.begintijd + " " + tekst;
-  else if (soort !== "afspraak" && soort !== "toets") tekst = ICOON[soort] + " " + tekst;
+  else if (soort !== "afspraak" && soort !== "toets" && ICOON[soort]) tekst = ICOON[soort] + " " + tekst;
   if (isToets(item)) tekst = "📝 " + tekst;
 
   chip.textContent = tekst;

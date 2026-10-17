@@ -30,7 +30,9 @@ let stijl = laadInstelling("stijl", "rooster");      // rooster of lijst
 let focusDatum = vandaag();                          // welke week/maand/jaar
 let zoekterm = "";
 
-const ICOON = { afspraak: "📅", deadline: "⏰", taak: "✅", doel: "🎯", vrij: "🌴", toets: "📝", huiswerk: "📖", optie: "💪" };
+// Kleine icoontjes per soort. Huiswerk, opdrachten en taken hebben er geen (rustiger);
+// die herken je aan het gekleurde randje.
+const ICOON = { afspraak: "", deadline: "", taak: "", doel: "🎯", vrij: "🌴", toets: "📝", huiswerk: "", optie: "💪" };
 const DAGNAMEN = ["zo", "ma", "di", "wo", "do", "vr", "za"];
 
 // Haal iets op uit het geheugen van de browser
@@ -344,7 +346,7 @@ function maakAfspraakRegel(afspraak, overlaptMet) {
 function lesLabels(les) {
   if (!les.huiswerk || les.huiswerk.length === 0) return "";
   const open = les.huiswerk.filter(item => !item.klaar).length;
-  return open === 0 ? "📖 ✓ alles af" : "📖 " + open + " te doen";
+  return open === 0 ? "✓ alles af" : open + " te doen";
 }
 
 // De naam van een les: jouw naam (zoals in Magister), anders die uit Google
@@ -401,7 +403,7 @@ function maakRegel(item) {
 
   const tekst = document.createElement("span");
   tekst.className = "tekst";
-  tekst.textContent = item.soort === "taak" ? "" : ICOON[item.soort] + " ";
+  tekst.textContent = ICOON[item.soort] ? ICOON[item.soort] + " " : "";
   // Een label met waar het bij hoort: een les, een vak of een idee
   let bijLes = item.lesId ? lesNaam(item.lesId) : item.vak;
   if (item.ideeId) {
@@ -582,7 +584,7 @@ function toonTeDoen() {
   for (let i = 0; i < 7; i++) datums.add(plusDagen(vandaag(), i));
   for (const datum of Object.keys(perDag)) datums.add(datum);
 
-  if (teLaat.length) vak.appendChild(maakDagBlok("⚠️ Te laat", teLaat, null));
+  if (teLaat.length) vak.appendChild(maakDagBlok("Te laat", teLaat, null));
   for (const datum of [...datums].sort()) {
     vak.appendChild(maakDagBlok(dagKop(datum), perDag[datum] || [], datum, true));
   }
@@ -611,7 +613,7 @@ function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
   if (datum && metToevoegKnop) {
     const plus = document.createElement("button");
     plus.className = "dag-plus";
-    plus.textContent = "➕";
+    plus.textContent = "+";
     plus.title = "Iets toevoegen op " + mooieDatum(datum);
     plus.onclick = () => openToevoegen(datum);
     kop.appendChild(plus);
@@ -641,7 +643,7 @@ function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
 }
 
 // Een korte regel met wat er op een dag in je agenda staat,
-// bijv. "📚 les 12:00–14:45 · 📅 Werk 18:00–21:30"
+// bijv. "Les 12:00–14:45 · Werk 18:00–21:30"
 function dagSamenvatting(datum, scheiding = " · ") {
   const opDeDag = itemsOpDag(datum, alleItems(false));
   const afspraken = opDeDag.filter(item => heeftTijd(item) && item.soort !== "optie");
@@ -654,10 +656,10 @@ function dagSamenvatting(datum, scheiding = " · ") {
   }
   if (lessen.length) {
     const eind = lessen.map(les => les.eindtijd || les.begintijd).sort().pop();
-    delen.push("📚 les " + lessen[0].begintijd + "–" + eind);
+    delen.push("Les " + lessen[0].begintijd + "–" + eind);
   }
   for (const item of afspraken.filter(item => !lessen.includes(item))) {
-    delen.push((isToets(item) ? "📝 " : "📅 ") + item.titel + " " + item.begintijd + (item.eindtijd ? "–" + item.eindtijd : ""));
+    delen.push((isToets(item) ? "📝 " : "") + item.titel + " " + item.begintijd + (item.eindtijd ? "–" + item.eindtijd : ""));
   }
   return delen.join(scheiding);
 }

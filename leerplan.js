@@ -128,7 +128,7 @@ function toonOpRij(id, lijst, leegTekst) {
   vak.innerHTML = "";
 
   const groepen = [
-    { titel: "⚠️ Te laat", taken: lijst.filter(item => !item.klaar && dagenTot(item.datum) < 0) },
+    { titel: "Te laat", taken: lijst.filter(item => !item.klaar && dagenTot(item.datum) < 0) },
     { titel: "Deze week", taken: lijst.filter(item => !item.klaar && dagenTot(item.datum) >= 0 && dagenTot(item.datum) < 7) },
     { titel: "Later", taken: lijst.filter(item => !item.klaar && dagenTot(item.datum) >= 7) },
     { titel: "✓ Af", taken: lijst.filter(item => item.klaar && dagenTot(item.datum) >= -14) }
@@ -396,7 +396,7 @@ function alGepland(datum) {
   const agenda = dagSamenvatting(datum, "\n"); // staat in app.js
   if (agenda) regels.push(...agenda.split("\n"));
   for (const item of andereTakenOp(datum)) {
-    regels.push(ICOON[item.soort] + " " + item.titel + (item.vak ? " (" + item.vak + ")" : ""));
+    regels.push((ICOON[item.soort] ? ICOON[item.soort] + " " : "• ") + item.titel + (item.vak ? " (" + item.vak + ")" : ""));
   }
   return regels;
 }

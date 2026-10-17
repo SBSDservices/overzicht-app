@@ -79,7 +79,7 @@ function toonHomeTodo() {
   }
 
   const teLaat = open.filter(item => groepVoor(item) === "te-laat");
-  if (teLaat.length) vak.appendChild(maakDagBlok("⚠️ Te laat", teLaat, null)); // staat in app.js
+  if (teLaat.length) vak.appendChild(maakDagBlok("Te laat", teLaat, null)); // staat in app.js
 
   // Vandaag en morgen altijd, de dagen daarna alleen als er iets staat
   let aantalVandaag = 0;

@@ -5,11 +5,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mijn Overzicht</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="style.css">
 
   <!-- Om de app op je telefoon te installeren -->
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#4a3aff">
+  <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="iconen/icoon-192.png">
   <link rel="apple-touch-icon" href="iconen/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,13 +22,37 @@
 <body>
   <!-- Het menu: links op de laptop, onderin op je telefoon -->
   <nav id="menu">
-    <div class="menu-logo">Mijn Overzicht</div>
-    <button data-pagina="home"><span class="menu-icoon">🏠</span><span>Home</span></button>
-    <button data-pagina="todo"><span class="menu-icoon">✅</span><span>To-do</span></button>
-    <button data-pagina="taken"><span class="menu-icoon">📋</span><span>Taken</span></button>
-    <button data-pagina="studie"><span class="menu-icoon">📚</span><span>Studie</span></button>
-    <button data-pagina="agenda"><span class="menu-icoon">📅</span><span>Agenda</span></button>
-    <button data-pagina="ideeen"><span class="menu-icoon">💡</span><span>Ideeën</span></button>
+    <div class="menu-logo">
+      <span class="logo-blokje">
+        <svg viewBox="0 0 24 24"><path d="m7 12.5 3.2 3.2L17 9"/></svg>
+      </span>
+      Mijn Overzicht
+    </div>
+    <!-- De icoontjes zijn kleine tekeningen (SVG): lijnen in de kleur van de tekst -->
+    <button data-pagina="home">
+      <svg class="menu-icoon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+      <span>Home</span>
+    </button>
+    <button data-pagina="todo">
+      <svg class="menu-icoon" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8 12 3 3 5-6"/></svg>
+      <span>To-do</span>
+    </button>
+    <button data-pagina="taken">
+      <svg class="menu-icoon" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>
+      <span>Taken</span>
+    </button>
+    <button data-pagina="studie">
+      <svg class="menu-icoon" viewBox="0 0 24 24"><path d="M2.5 5h6a3.5 3.5 0 0 1 3.5 3.5V20a2.5 2.5 0 0 0-2.5-2.5h-7z"/><path d="M21.5 5h-6A3.5 3.5 0 0 0 12 8.5V20a2.5 2.5 0 0 1 2.5-2.5h7z"/></svg>
+      <span>Studie</span>
+    </button>
+    <button data-pagina="agenda">
+      <svg class="menu-icoon" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M16 2.5v4M8 2.5v4M3.5 10h17"/></svg>
+      <span>Agenda</span>
+    </button>
+    <button data-pagina="ideeen">
+      <svg class="menu-icoon" viewBox="0 0 24 24"><path d="M9 18h6M10 21.5h4"/><path d="M12 2.5a6.5 6.5 0 0 0-3.8 11.8c.5.4.8 1 .8 1.6V17h6v-1.1c0-.6.3-1.2.8-1.6A6.5 6.5 0 0 0 12 2.5z"/></svg>
+      <span>Ideeën</span>
+    </button>
   </nav>
 
   <div id="inhoud">
@@ -35,8 +62,11 @@
         <p id="datum-vandaag" class="info"></p>
       </div>
       <div class="kop-acties">
-        <input id="zoek" type="search" placeholder="🔍 Zoeken…" aria-label="Zoeken">
-        <button id="toevoegen-knop" class="hoofdknop">➕ Toevoegen</button>
+        <input id="zoek" type="search" placeholder="Zoeken…" aria-label="Zoeken">
+        <button id="toevoegen-knop" class="hoofdknop">
+          <svg class="knop-icoon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Toevoegen
+        </button>
       </div>
     </header>
 
@@ -55,7 +85,7 @@
         <div class="home-layout">
           <div class="kaart home-agenda">
             <div class="kaart-kop">
-              <h2>📅 Komende 7 dagen</h2>
+              <h2>Komende 7 dagen</h2>
               <button class="link-knop" data-ga-naar="agenda">Hele agenda →</button>
             </div>
             <div id="home-rooster"></div>
@@ -64,7 +94,7 @@
           <div class="home-todo">
             <div class="kaart">
               <div class="kaart-kop">
-                <h2>✅ To-do</h2>
+                <h2>To-do</h2>
                 <button class="link-knop" data-ga-naar="todo">Alles →</button>
               </div>
               <div id="home-todo"></div>
@@ -72,7 +102,7 @@
 
             <div class="kaart">
               <div class="kaart-kop">
-                <h2>🔥 Belangrijk</h2>
+                <h2>Belangrijk</h2>
                 <button class="link-knop" data-ga-naar="taken">Takenlijst →</button>
               </div>
               <ul id="dash-belangrijk" class="compact"></ul>
@@ -80,7 +110,7 @@
 
             <div class="kaart">
               <div class="kaart-kop">
-                <h2>💪 Kan vandaag</h2>
+                <h2>Kan vandaag</h2>
                 <span class="info">hoeft niet, mag wel</span>
               </div>
               <ul id="lijst-optie" class="compact"></ul>
@@ -102,7 +132,7 @@
         <ul id="lijst-takenlijst"></ul>
 
         <div class="sectie-kop">
-          <h2>🎯 Doelen</h2>
+          <h2>Doelen</h2>
         </div>
         <ul id="lijst-doel"></ul>
       </section>
@@ -110,9 +140,9 @@
       <!-- ===== STUDIE: alles voor school ===== -->
       <section id="pagina-studie" class="pagina">
         <div class="schakelaar studie-tabs">
-          <button data-studie="rooster">🗓️ Rooster</button>
-          <button data-studie="opdrachten">📋 Opdrachten &amp; huiswerk</button>
-          <button data-studie="plannen">📚 Leerplannen</button>
+          <button data-studie="rooster">Rooster</button>
+          <button data-studie="opdrachten">Opdrachten &amp; huiswerk</button>
+          <button data-studie="plannen">Leerplannen</button>
         </div>
 
         <!-- Tabblad: schoolrooster -->
@@ -139,16 +169,16 @@
             <input id="school-vak" placeholder="Vak" list="school-vakken" aria-label="Vak">
             <datalist id="school-vakken"></datalist>
             <label class="veld">Inleveren op <input id="school-datum" type="date" required></label>
-            <button type="submit" class="hoofdknop">➕ Toevoegen</button>
+            <button type="submit" class="hoofdknop">Toevoegen</button>
           </form>
 
           <div class="studie-twee">
             <div>
-              <h2>📋 Opdrachten om in te leveren</h2>
+              <h2>Opdrachten om in te leveren</h2>
               <div id="studie-opdrachten"></div>
             </div>
             <div>
-              <h2>📖 Huiswerk &amp; 📝 toetsen</h2>
+              <h2>Huiswerk &amp; toetsen</h2>
               <div id="studie-huiswerk"></div>
             </div>
           </div>
@@ -157,21 +187,21 @@
         <!-- Tabblad: leerplannen -->
         <div id="studie-plannen-paneel" class="studie-paneel">
           <div id="studie-leeg" class="kaart studie-leeg">
-            <h2>📚 Maak een leerplan voor je tentamens</h2>
+            <h2>Maak een leerplan voor je tentamens</h2>
             <p>Kies een tentamen, typ wat je moet doen (bijvoorbeeld hoofdstuk 1 t/m 7 samenvatten, een oefentoets maken)
               en vink aan op welke dag je wat doet.</p>
-            <button class="hoofdknop nieuw-plan-knop">➕ Nieuw leerplan</button>
+            <button class="hoofdknop nieuw-plan-knop">Nieuw leerplan</button>
           </div>
 
           <div id="studie-inhoud">
             <div class="sectie-kop">
-              <h2>📚 Je leerplannen</h2>
-              <button class="hoofdknop nieuw-plan-knop">➕ Nieuw leerplan</button>
+              <h2>Je leerplannen</h2>
+              <button class="hoofdknop nieuw-plan-knop">Nieuw leerplan</button>
             </div>
             <div id="studie-per-vak" class="plannen-raster"></div>
 
             <div class="sectie-kop">
-              <h2>📅 Per dag</h2>
+              <h2>Per dag</h2>
             </div>
             <div id="studie-per-dag" class="dagen-kolommen"></div>
           </div>
@@ -204,7 +234,7 @@
       <section id="pagina-ideeen" class="pagina">
         <!-- Verschijnt als je vanuit TikTok/Instagram iets naar de app hebt gedeeld -->
         <div id="gedeeld-blok" class="kaart gedeeld-blok verborgen">
-          <h2>📥 Gedeeld met je app</h2>
+          <h2>Gedeeld met je app</h2>
           <p id="gedeeld-link" class="gedeeld-link"></p>
           <input id="gedeeld-notitie" placeholder="Waar gaat het over? (mag leeg)">
           <div class="gedeeld-rij">
@@ -217,11 +247,11 @@
         <div class="ideeen-balk">
           <div class="schakelaar">
             <button data-categorie="alles">Alles</button>
-            <button data-categorie="business">💼 Business</button>
-            <button data-categorie="ai">🤖 AI &amp; leren</button>
-            <button data-categorie="overig">💡 Overig</button>
+            <button data-categorie="business">Business</button>
+            <button data-categorie="ai">AI &amp; leren</button>
+            <button data-categorie="overig">Overig</button>
           </div>
-          <button id="nieuw-idee" class="hoofdknop">➕ Nieuw idee</button>
+          <button id="nieuw-idee" class="hoofdknop">Nieuw idee</button>
         </div>
 
         <div id="ideeen-layout">
@@ -229,7 +259,7 @@
 
           <div id="idee-editor" class="verborgen">
             <div class="idee-kop">
-              <button id="idee-sluiten" class="link-knop">← Alle ideeën</button>
+              <button id="idee-sluiten" class="link-knop">Alle ideeën</button>
               <select id="idee-categorie" aria-label="Categorie">
                 <option value="business">💼 Business-idee</option>
                 <option value="ai">🤖 AI &amp; leren</option>
@@ -239,7 +269,7 @@
 
             <input id="idee-titel" placeholder="Titel, bijv. 'Gepersonaliseerde sportschema's met AI'">
 
-            <h4>🔗 Video's en links</h4>
+            <h4>Video's en links</h4>
             <ul id="idee-links"></ul>
             <form id="idee-link-formulier">
               <input id="idee-link-url" placeholder="Plak hier een link van TikTok, Instagram, YouTube…" required>
@@ -247,19 +277,19 @@
               <button type="submit">Link opslaan</button>
             </form>
 
-            <h4>🚀 Volgende stappen <span class="info">(komen in je takenlijst)</span></h4>
+            <h4>Volgende stappen <span class="info">(komen in je takenlijst)</span></h4>
             <ul id="idee-stappen" class="compact"></ul>
             <div class="rij">
               <input id="idee-nieuwe-stap" placeholder="Bijv. 'Concurrenten opzoeken', en druk op Enter">
-              <button type="button" id="idee-stap-toevoegen">➕</button>
+              <button type="button" id="idee-stap-toevoegen"></button>
             </div>
 
-            <h4>✍️ Uitwerking</h4>
+            <h4>Uitwerking</h4>
             <textarea id="idee-tekst" placeholder="Werk je idee hier uit. Bijvoorbeeld:&#10;- Wat is het probleem?&#10;- Voor wie is het?&#10;- Hoe verdien je eraan?&#10;- Wat is de eerste stap?"></textarea>
 
             <div class="idee-voet">
               <span id="idee-opgeslagen" class="info"></span>
-              <button id="idee-verwijder" class="link-knop gevaar">🗑️ Idee verwijderen</button>
+              <button id="idee-verwijder" class="link-knop gevaar">Idee verwijderen</button>
             </div>
           </div>
         </div>
@@ -270,9 +300,9 @@
   <!-- Het venster om iets toe te voegen -->
   <dialog id="toevoeg-venster">
     <form method="dialog">
-      <button class="venster-sluiten" title="Sluiten">✕</button>
+      <button class="venster-sluiten" title="Sluiten"></button>
     </form>
-    <h3>➕ Toevoegen</h3>
+    <h3>Toevoegen</h3>
 
     <form id="formulier">
       <input id="titel" placeholder="Wat moet je doen of waar moet je zijn?" required>
@@ -331,13 +361,13 @@
   <!-- Het venster om een leerplan te maken -->
   <dialog id="plan-venster">
     <form method="dialog">
-      <button class="venster-sluiten" title="Sluiten">✕</button>
+      <button class="venster-sluiten" title="Sluiten"></button>
     </form>
-    <h3 id="plan-venster-titel">📚 Nieuw leerplan</h3>
+    <h3 id="plan-venster-titel">Nieuw leerplan</h3>
 
     <form id="plan-formulier">
       <!-- Stap 1: voor welke toets -->
-      <h4>1. 📝 Voor welke toets?</h4>
+      <h4>1. Voor welke toets?</h4>
       <label class="plan-veld">Tentamen uit je agenda
         <select id="plan-tentamen"></select>
       </label>
@@ -351,14 +381,14 @@
       </div>
 
       <!-- Stap 2: wat moet je doen -->
-      <h4>2. ✍️ Wat moet je doen?</h4>
+      <h4>2. Wat moet je doen?</h4>
       <div class="plan-invoer">
         <input id="plan-nieuwe-taak" placeholder="Bijv. 'Hoofdstuk 1 samenvatten', en druk op Enter">
-        <button type="button" id="plan-taak-toevoegen">➕ Toevoegen</button>
+        <button type="button" id="plan-taak-toevoegen">Toevoegen</button>
       </div>
       <p class="info">Je kunt ook een lijstje plakken: elke regel wordt een taak.</p>
 
-      <h4>3. 📅 Vink aan op welke dag je wat doet</h4>
+      <h4>3. Vink aan op welke dag je wat doet</h4>
       <p class="info">Bovenaan elke dag zie je wat er al gepland staat. Scroll opzij voor meer dagen.</p>
       <div id="plan-raster"></div>
       <div class="plan-voet">
@@ -366,19 +396,19 @@
         <span id="plan-melding" class="info"></span>
       </div>
 
-      <button type="submit" class="hoofdknop" id="plan-opslaan">✓ Leerplan opslaan</button>
+      <button type="submit" class="hoofdknop" id="plan-opslaan">Leerplan opslaan</button>
     </form>
   </dialog>
 
   <!-- Het venster dat opent als je op een les klikt -->
   <dialog id="les-venster">
     <form method="dialog">
-      <button class="venster-sluiten" title="Sluiten">✕</button>
+      <button class="venster-sluiten" title="Sluiten"></button>
     </form>
     <h3 id="les-titel"></h3>
     <p id="les-info" class="info"></p>
 
-    <h4>📖 Te doen voor deze les</h4>
+    <h4>Te doen voor deze les</h4>
     <ul id="les-huiswerk"></ul>
     <form id="les-huiswerk-formulier" class="les-formulier">
       <select id="les-soort" aria-label="Soort">
@@ -390,7 +420,7 @@
       <button type="submit">Toevoegen</button>
     </form>
 
-    <h4>🏷️ Naam zoals in Magister <span class="info">(mag leeg blijven)</span></h4>
+    <h4>Naam zoals in Magister <span class="info">(mag leeg blijven)</span></h4>
     <input id="les-naam" placeholder="Bijv. 1H-BMA-BAS-T" aria-label="Naam zoals in Magister">
     <p class="info">Eindigt de naam op <strong>-T</strong>? Dan wordt het vanzelf een tentamen.</p>
 
