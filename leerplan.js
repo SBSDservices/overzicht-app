@@ -260,8 +260,8 @@ function toonPlanTaken() {
   vak.innerHTML = "";
   const tentamen = document.getElementById("plan-datum").value;
 
-  // De datumvakjes mogen niet na het tentamen
-  const laatste = tentamen ? plusDagen(tentamen, -1) : "";
+  // De datumvakjes mogen tot en met de dag van het tentamen (dan kun je die ochtend nog leren)
+  const laatste = tentamen || "";
   document.getElementById("plan-nieuwe-datum").max = laatste;
 
   if (planRijen.length === 0) {
@@ -356,9 +356,9 @@ function toonPlanTaken() {
 function toonPlanMelding() {
   const tentamen = document.getElementById("plan-datum").value;
   const zonderDag = planRijen.filter(rij => !rij.datum).length;
-  const naTentamen = tentamen ? planRijen.filter(rij => rij.datum && rij.datum >= tentamen).length : 0;
+  const naTentamen = tentamen ? planRijen.filter(rij => rij.datum && rij.datum > tentamen).length : 0;
   let tekst = "";
-  if (naTentamen) tekst = "⚠️ " + naTentamen + " taak/taken staan op of na de dag van je tentamen";
+  if (naTentamen) tekst = "⚠️ " + naTentamen + (naTentamen === 1 ? " taak staat" : " taken staan") + " ná je tentamen";
   else if (zonderDag) tekst = zonderDag + (zonderDag === 1 ? " taak heeft" : " taken hebben") + " nog geen dag";
   else if (planRijen.length) tekst = "✓ Alles heeft een dag";
   document.getElementById("plan-melding").textContent = tekst;
