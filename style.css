@@ -1131,6 +1131,89 @@ li.tentamen-dag {
   margin: -4px 0 12px;
 }
 
+/* Het rooster in het leerplan-venster: taken × dagen */
+.plan-scroll {
+  overflow-x: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.plan-tabel {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.plan-tabel th, .plan-tabel td {
+  padding: 3px;
+  text-align: center;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.plan-tabel th {
+  font-weight: normal;
+  color: #666;
+  min-width: 34px;
+}
+
+.plan-tabel th span, .plan-tabel th strong { display: block; }
+.plan-tabel th strong { color: #222; font-size: 14px; }
+.plan-tabel th.is-vandaag strong { color: #4a3aff; }
+
+.plan-tabel .weekend { background-color: #f8f9fa; }
+
+/* De eerste kolom (de taken) blijft staan als je opzij scrolt */
+.plan-tabel .taak-kolom {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: white;
+  text-align: left;
+  min-width: 190px;
+  padding-left: 6px;
+}
+
+.plan-tabel .taak-kolom input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+  padding: 6px;
+}
+
+.plan-tabel .tentamen-kolom { background-color: #fff0f6; color: #c2255c; }
+
+@media (max-width: 600px) {
+  .plan-tabel .taak-kolom { min-width: 140px; }
+  .plan-tabel .taak-kolom input { font-size: 13px; padding: 5px; }
+}
+
+.dag-vakje {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  color: white;
+}
+
+.dag-vakje:hover { border-color: #4a3aff; }
+.dag-vakje.aan { background-color: #4a3aff; border-color: #4a3aff; }
+.dag-vakje.klaar { background-color: #2b8a3e; border-color: #2b8a3e; }
+
+.plan-tabel tfoot td { color: #888; font-size: 12px; border-bottom: none; }
+.plan-tabel tfoot .veel { color: #e03131; font-weight: bold; }
+
+.plan-voet {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
 .plan-snel-blok {
   background-color: #f8f9fa;
   border-radius: 8px;

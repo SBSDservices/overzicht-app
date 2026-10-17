@@ -303,57 +303,19 @@
 
       <!-- Stap 2: wat moet je doen -->
       <h4>2. ✍️ Wat moet je doen?</h4>
-      <div class="plan-snel-blok">
-        <div class="plan-snel">
-          <input id="plan-aantal" type="number" min="1" max="40" value="7" aria-label="Aantal">
-          <input id="plan-prefix" value="Hoofdstuk" aria-label="Hoofdstuk, unit, les…">
-          <span>en per stuk:</span>
-        </div>
-        <div id="plan-acties" class="dagen-kiezer">
-          <label><input type="checkbox" value="samenvatten" checked> samenvatten</label>
-          <label><input type="checkbox" value="leren" checked> leren</label>
-          <label><input type="checkbox" value="oefenvragen maken"> oefenvragen maken</label>
-          <label><input type="checkbox" value="begrippen leren"> begrippen leren</label>
-        </div>
-        <button type="button" id="plan-genereer">➕ Voeg toe aan de lijst</button>
-      </div>
-
-      <ul id="plan-rijen"></ul>
       <div class="rij">
-        <input id="plan-losse-taak" placeholder="Losse taak, bijv. 'Oefententamen maken'">
-        <button type="button" id="plan-losse-toevoegen">➕</button>
+        <input id="plan-nieuwe-taak" placeholder="Typ wat je moet doen, bijv. 'Hoofdstuk 1 samenvatten', en druk op Enter">
+        <button type="button" id="plan-taak-toevoegen">➕ Toevoegen</button>
       </div>
+      <p class="info">Tip: plak een lijstje met meerdere regels, dan wordt elke regel een taak.</p>
 
-      <!-- Stap 3: verdelen -->
-      <h4>3. 📅 Verdelen over de dagen</h4>
-      <div class="plan-rij">
-        <label class="plan-veld">Beginnen op
-          <input id="plan-start" type="date">
-        </label>
-        <label class="plan-veld">Dagen om alles te herhalen
-          <input id="plan-herhaal" type="number" min="0" max="7" value="2">
-        </label>
+      <!-- Stap 3: wanneer -->
+      <h4>3. 📅 Vink aan op welke dag je wat doet</h4>
+      <div id="plan-raster"></div>
+      <div class="plan-voet">
+        <button type="button" id="plan-elke-dag" class="link-knop">Of: zet ze op volgorde, elke dag één</button>
+        <span id="plan-melding" class="info"></span>
       </div>
-
-      <div class="plan-rij">
-        <label class="plan-veld">Verdelen
-          <select id="plan-verdeling">
-            <option value="elkeDag">Elke dag één, zo snel mogelijk</option>
-            <option value="verspreid">Gelijk verspreid over alle dagen</option>
-          </select>
-        </label>
-        <div class="plan-veld">Vrij op
-          <span id="plan-overslaan" class="dagen-kiezer">
-            <label><input type="checkbox" value="6"> za</label>
-            <label><input type="checkbox" value="0"> zo</label>
-          </span>
-        </div>
-      </div>
-      <p class="info">De app verdeelt alles automatisch. Wil je een taak op een andere dag? Pas de datum in de lijst hierboven aan.</p>
-
-      <h4>Zo ziet je planning eruit</h4>
-      <p id="plan-melding" class="overlap"></p>
-      <ul id="plan-voorbeeld" class="compact"></ul>
 
       <button type="submit" class="hoofdknop" id="plan-opslaan">✓ Leerplan opslaan</button>
     </form>
