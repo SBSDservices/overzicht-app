@@ -97,6 +97,15 @@
 
       <!-- ===== TO-DO: alles met een datum ===== -->
       <section id="pagina-todo" class="pagina smal">
+        <!-- Je leerplannen in het kort -->
+        <div class="kaart todo-plannen">
+          <div class="kaart-kop">
+            <h2>📚 Leerplannen</h2>
+            <button class="hoofdknop nieuw-plan-knop">➕ Leerplan maken</button>
+          </div>
+          <div id="todo-plannen"></div>
+        </div>
+
         <p class="info pagina-uitleg">Alles met een datum: huiswerk, toetsen, opdrachten en taken.</p>
         <ul id="lijst-te-doen"></ul>
       </section>
@@ -227,6 +236,7 @@
         <option value="optie">💪 Optie (kan, hoeft niet)</option>
         <option value="doel">🎯 Doel</option>
         <option value="vrij">🌴 Vrij / vakantie</option>
+        <option value="leerplan">📚 Leerplan voor een tentamen…</option>
       </select>
 
       <label id="veld-herhaal" class="veld">

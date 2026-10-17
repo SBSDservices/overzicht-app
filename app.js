@@ -692,7 +692,10 @@ function toonAlles() {
   document.getElementById("stijl-knoppen").classList.toggle("verborgen", weergave === "jaar");
 
   if (pagina === "home") toonHome();         // staat in home.js
-  if (pagina === "todo") toonTeDoen();
+  if (pagina === "todo") {
+    toonTodoPlannen(); // staat in leerplan.js
+    toonTeDoen();
+  }
   if (pagina === "taken") toonTaken();
   if (pagina === "studie") toonStudie();     // staat in leerplan.js
   if (pagina === "ideeen") toonIdeeen();     // staat in ideeen.js

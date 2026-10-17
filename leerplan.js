@@ -193,7 +193,66 @@ function toonStudiePerVak() {
   }
 }
 
+// ----- Bovenaan de To-do: je leerplannen in het kort -----
+
+function toonTodoPlannen() {
+  const vak = document.getElementById("todo-plannen");
+  vak.innerHTML = "";
+
+  const plannen = leerplannen
+    .filter(plan => dagenTot(plan.tentamenDatum) >= 0) // geweest? dan niet meer laten zien
+    .sort((a, b) => a.tentamenDatum.localeCompare(b.tentamenDatum));
+
+  if (plannen.length === 0) {
+    vak.innerHTML = '<p class="leeg">Nog geen leerplannen. Maak er een voor je volgende tentamen, ' +
+      'dan verdeelt de app het leren over de dagen.</p>';
+    return;
+  }
+
+  for (const plan of plannen) {
+    const taken = planItems(plan.id);
+    const af = taken.filter(item => item.klaar).length;
+    const achter = taken.filter(item => item.datum < vandaag() && !item.klaar).length;
+    const dagen = dagenTot(plan.tentamenDatum);
+
+    const knop = document.createElement("button");
+    knop.className = "plan-chip" + (achter ? " achter" : "");
+    knop.title = "Bekijk dit leerplan";
+    knop.onclick = () => kiesPagina("studie");
+
+    const naam = document.createElement("strong");
+    naam.textContent = plan.vak;
+    const info = document.createElement("span");
+    info.textContent = af + "/" + taken.length + " af · " +
+      (dagen === 0 ? "vandaag!" : dagen === 1 ? "morgen!" : "nog " + dagen + " dagen") +
+      (achter ? " · ⚠️ " + achter + " achter" : "");
+
+    const balk = div("drukte");
+    const vulling = div("drukte-balk " + (achter ? "drukte-gemiddeld" : "drukte-rustig"));
+    vulling.style.width = (taken.length ? af / taken.length * 100 : 0) + "%";
+    balk.appendChild(vulling);
+
+    knop.append(naam, info, balk);
+    vak.appendChild(knop);
+  }
+}
+
 // ----- Een nieuw leerplan maken -----
+
+// Vanuit het Toevoegen-venster: soort "📚 Leerplan" gekozen
+function vanToevoegenNaarPlan() {
+  const titel = document.getElementById("titel").value.trim();
+  document.getElementById("soort").value = "taak"; // voor de volgende keer
+  document.getElementById("toevoeg-venster").close();
+  openPlanVenster();
+  // Had je al een vak getypt? Dan nemen we dat over
+  if (titel) {
+    document.getElementById("plan-tentamen").value = "";
+    document.getElementById("plan-vak").value = vakUitTitel(titel);
+    document.getElementById("titel").value = "";
+    toonPlanVoorbeeld();
+  }
+}
 
 function openPlanVenster() {
   // De keuzelijst met tentamens uit je agenda
@@ -365,6 +424,9 @@ function verwijderPlan(planId) {
 // ----- Starten -----
 document.querySelectorAll(".nieuw-plan-knop").forEach(knop => knop.addEventListener("click", openPlanVenster));
 document.getElementById("plan-tentamen").addEventListener("change", kiesPlanTentamen);
+document.getElementById("soort").addEventListener("change", () => {
+  if (document.getElementById("soort").value === "leerplan") vanToevoegenNaarPlan();
+});
 document.getElementById("plan-vul-hoofdstukken").addEventListener("click", vulHoofdstukken);
 document.getElementById("plan-formulier").addEventListener("input", toonPlanVoorbeeld);
 document.getElementById("plan-formulier").addEventListener("change", toonPlanVoorbeeld);
