@@ -1131,6 +1131,24 @@ li.tentamen-dag {
   margin: -4px 0 12px;
 }
 
+/* Het leerplan-venster: een taak typen met een datum erbij */
+.plan-invoer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.plan-invoer #plan-nieuwe-taak { flex: 1 1 220px; min-width: 0; }
+.plan-invoer #plan-nieuwe-datum { flex: 0 0 auto; }
+
+.plan-taken { margin-top: 10px; }
+
+li.plan-taak.zonder-dag input[type="date"] { border-color: #fd7e14; background-color: #fff4e6; }
+
+.plan-af { color: #2b8a3e; font-weight: bold; }
+
+.plan-overzicht li.druk { background-color: #fff5f5; }
+
 /* Het rooster in het leerplan-venster: taken × dagen */
 .plan-scroll {
   overflow-x: auto;

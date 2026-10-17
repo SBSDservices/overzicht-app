@@ -302,15 +302,15 @@
       </div>
 
       <!-- Stap 2: wat moet je doen -->
-      <h4>2. ✍️ Wat moet je doen?</h4>
-      <div class="rij">
-        <input id="plan-nieuwe-taak" placeholder="Typ wat je moet doen, bijv. 'Hoofdstuk 1 samenvatten', en druk op Enter">
+      <h4>2. ✍️ Wat moet je doen, en wanneer?</h4>
+      <div class="plan-invoer">
+        <input id="plan-nieuwe-taak" placeholder="Bijv. 'Hoofdstuk 1 samenvatten'">
+        <input id="plan-nieuwe-datum" type="date" aria-label="Op welke dag">
         <button type="button" id="plan-taak-toevoegen">➕ Toevoegen</button>
       </div>
-      <p class="info">Tip: plak een lijstje met meerdere regels, dan wordt elke regel een taak.</p>
+      <p class="info">Typ een taak, kies de dag en druk op Enter. Iets op meerdere dagen doen? Voeg het twee keer toe.
+        Je kunt ook een lijstje plakken: elke regel wordt een taak.</p>
 
-      <!-- Stap 3: wanneer -->
-      <h4>3. 📅 Vink aan op welke dag je wat doet</h4>
       <div id="plan-raster"></div>
       <div class="plan-voet">
         <button type="button" id="plan-elke-dag" class="link-knop">Of: zet ze op volgorde, elke dag één</button>
