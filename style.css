@@ -405,6 +405,10 @@ form button[type="submit"], #google-knop {
   min-height: 28px;
 }
 
+/* Een week zonder afspraken met een tijd: alleen de dagen met hun taken */
+.zonder-uren .hele-dag-cel { min-height: 70px; border-bottom: none; }
+.zonder-uren .rooster-label { border-bottom: none; }
+
 .tijd-as {
   position: relative;
 }

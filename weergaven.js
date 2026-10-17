@@ -85,13 +85,9 @@ function maakWeekRooster(datums, alle) {
       eindUur = Math.max(eindUur, Math.ceil(eindMinuten(afspraak) / 60));
     }
   }
-  if (beginUur >= eindUur) {
-    // Niks met een tijd deze week: laat een gewone dag zien
-    beginUur = 9;
-    eindUur = 17;
-  }
-  // Minstens 6 uur laten zien, anders ziet het er vreemd uit
-  while (eindUur - beginUur < 6) {
+  const heeftUren = beginUur < eindUur; // is er deze week iets met een tijd?
+  // Minstens 3 uur laten zien, anders worden de blokjes onleesbaar klein
+  while (heeftUren && eindUur - beginUur < 3) {
     if (eindUur < 24) eindUur++;
     else beginUur--;
   }
@@ -121,6 +117,13 @@ function maakWeekRooster(datums, alle) {
     const cel = div("hele-dag-cel");
     for (const item of lijst) cel.appendChild(maakChip(item));
     raster.appendChild(cel);
+  }
+
+  // Niks met een tijd? Dan laten we de uren helemaal weg
+  if (!heeftUren) {
+    label.textContent = "";
+    raster.classList.add("zonder-uren");
+    return scroll;
   }
 
   // Rij 3: de tijdlijn met uren

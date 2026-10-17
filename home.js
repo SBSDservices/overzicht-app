@@ -34,9 +34,13 @@ function toonSamenvatting(todo, belangrijk) {
     { getal: toetsen, tekst: toetsen === 1 ? "toets in 2 weken" : "toetsen in 2 weken", pagina: "studie" }
   ];
 
+  // Alleen laten zien wat van toepassing is (dus niet "0 te laat")
+  const tonen = blokjes.filter(blokje => blokje.getal > 0);
+  if (tonen.length === 0) return;
+
   const rij = document.createElement("div");
   rij.className = "teller-rij";
-  for (const blokje of blokjes) {
+  for (const blokje of tonen) {
     const teller = document.createElement("button");
     teller.className = "teller";
     teller.onclick = () => kiesPagina(blokje.pagina);

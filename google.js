@@ -228,19 +228,31 @@ function soortAgenda(agenda) {
 
 // Zet een afspraak van Google om naar hoe onze app afspraken bewaart
 function naarAfspraak(event, agenda) {
-  const heleDag = !event.start.dateTime;
-  const begin = heleDag ? null : new Date(event.start.dateTime);
-  const eind = heleDag ? null : new Date(event.end.dateTime);
+  const echteHeleDag = !event.start.dateTime;
+  const begin = echteHeleDag ? null : new Date(event.start.dateTime);
+  const eind = echteHeleDag ? null : new Date(event.end.dateTime);
+
+  // Iets van 12 uur of langer (zoals "Herfstvakantie 01:00–23:00") zien we als "hele dag",
+  // anders vult het je hele rooster
+  const heelLang = !echteHeleDag && eind - begin >= 12 * 60 * 60 * 1000;
+  const heleDag = echteHeleDag || heelLang;
 
   // Bij "hele dag" geeft Google de dag ná de laatste dag als einde
-  const laatsteDag = heleDag ? plusDagen(event.end.date, -1) : "";
+  let startDag, laatsteDag;
+  if (echteHeleDag) {
+    startDag = event.start.date;
+    laatsteDag = plusDagen(event.end.date, -1);
+  } else {
+    startDag = datumTekst(begin);
+    laatsteDag = datumTekst(new Date(eind - 1)); // tot middernacht telt niet als de volgende dag
+  }
 
   return {
     id: "google-" + agenda.id + "-" + event.id,
     titel: event.summary || "(geen titel)",
     soort: "afspraak",
-    datum: heleDag ? event.start.date : datumTekst(begin),
-    einddatum: laatsteDag > event.start.date ? laatsteDag : "",
+    datum: startDag,
+    einddatum: heleDag && laatsteDag > startDag ? laatsteDag : "",
     begintijd: heleDag ? "" : tijdTekst(begin),
     eindtijd: heleDag ? "" : tijdTekst(eind),
     heleDag: heleDag,

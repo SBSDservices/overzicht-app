@@ -643,9 +643,15 @@ function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
 // Een korte regel met wat er op een dag in je agenda staat,
 // bijv. "📚 les 12:00–14:45 · 📅 Werk 18:00–21:30"
 function dagSamenvatting(datum, scheiding = " · ") {
-  const afspraken = itemsOpDag(datum, alleItems(false)).filter(item => heeftTijd(item) && item.soort !== "optie");
+  const opDeDag = itemsOpDag(datum, alleItems(false));
+  const afspraken = opDeDag.filter(item => heeftTijd(item) && item.soort !== "optie");
   const lessen = afspraken.filter(item => item.bronType === "school" && !isToets(item));
   const delen = [];
+
+  // Vakantie of vrije dag? Die zetten we bovenaan
+  for (const item of opDeDag.filter(item => (item.heleDag || item.soort === "vrij") && isVrij(item))) {
+    delen.push("🌴 " + item.titel);
+  }
   if (lessen.length) {
     const eind = lessen.map(les => les.eindtijd || les.begintijd).sort().pop();
     delen.push("📚 les " + lessen[0].begintijd + "–" + eind);
