@@ -27,7 +27,47 @@ function toonIdeeen() {
   const idee = zoekIdee(openIdeeId);
   document.getElementById("idee-editor").classList.toggle("verborgen", !idee);
   document.getElementById("ideeen-layout").classList.toggle("editor-open", Boolean(idee));
-  if (idee) toonLinks(idee);
+  if (idee) {
+    toonLinks(idee);
+    toonStappen(idee);
+  }
+  toonGedeeld();
+}
+
+// ----- Volgende stappen: taken die bij een idee horen -----
+
+function ideeStappen(ideeId) {
+  return items.filter(item => item.ideeId === ideeId);
+}
+
+function toonStappen(idee) {
+  const lijst = document.getElementById("idee-stappen");
+  lijst.innerHTML = "";
+  const stappen = ideeStappen(idee.id).sort((a, b) => a.klaar - b.klaar || a.id - b.id);
+  if (stappen.length === 0) {
+    lijst.innerHTML = '<p class="leeg">Wat is de eerste stap om dit idee uit te voeren?</p>';
+  }
+  for (const stap of stappen) lijst.appendChild(maakRegel(stap)); // staat in app.js
+}
+
+function voegStapToe() {
+  const invoer = document.getElementById("idee-nieuwe-stap");
+  const titel = invoer.value.trim();
+  if (!titel || !openIdeeId) return;
+
+  items.push({
+    id: Date.now(),
+    soort: "taak",
+    titel: titel,
+    datum: "",
+    prioriteit: "normaal",
+    ideeId: openIdeeId,
+    klaar: false
+  });
+  invoer.value = "";
+  bewaarItems();
+  toonAlles();
+  invoer.focus();
 }
 
 function toonIdeeenLijst() {
@@ -222,7 +262,85 @@ function voegLinkToe(event) {
   document.getElementById("idee-link-notitie").value = "";
 }
 
+// ----- Iets gedeeld vanuit TikTok, Instagram, YouTube… -----
+// Als de app op je telefoon is geïnstalleerd, kun je in andere apps op "Delen → Mijn Overzicht" tikken.
+// De app opent dan met ?gedeeld_url=…&gedeeld_tekst=… in het adres.
+
+let gedeeld = null; // { url, notitie }
+
+function verwerkGedeeldeLink() {
+  const adres = new URLSearchParams(location.search);
+  const titel = adres.get("gedeeld_titel") || "";
+  const tekst = adres.get("gedeeld_tekst") || "";
+  let url = adres.get("gedeeld_url") || "";
+  if (!titel && !tekst && !url) return;
+
+  // TikTok en Instagram zetten de link vaak in de tekst, niet apart
+  if (!url) url = ((titel + " " + tekst).match(/https?:\/\/\S+/) || [""])[0];
+  const notitie = (titel + " " + tekst).replace(url, "").replace(/\s+/g, " ").trim();
+  gedeeld = { url: url, notitie: notitie };
+
+  // Het adres weer netjes maken, zodat het niet nog een keer gebeurt als je ververst
+  history.replaceState(null, "", location.pathname + "#ideeen");
+  kiesPagina("ideeen");
+  toonGedeeld();
+}
+
+function toonGedeeld() {
+  const blok = document.getElementById("gedeeld-blok");
+  blok.classList.toggle("verborgen", !gedeeld);
+  if (!gedeeld) return;
+
+  document.getElementById("gedeeld-link").textContent =
+    gedeeld.url ? soortLink(gedeeld.url) + " · " + gedeeld.url : "📝 " + gedeeld.notitie;
+  document.getElementById("gedeeld-notitie").value = gedeeld.url ? gedeeld.notitie : "";
+
+  // Bij welk idee? Een nieuw idee, of een die je al hebt
+  const keuze = document.getElementById("gedeeld-idee");
+  keuze.innerHTML = "";
+  keuze.appendChild(new Option("➕ Nieuw idee", "nieuw"));
+  for (const idee of [...ideeen].sort((a, b) => b.bijgewerkt - a.bijgewerkt)) {
+    keuze.appendChild(new Option("Bij: " + (idee.titel || "Naamloos idee"), idee.id));
+  }
+}
+
+function slaGedeeldOp() {
+  const notitie = document.getElementById("gedeeld-notitie").value.trim();
+  const keuze = document.getElementById("gedeeld-idee").value;
+  let idee;
+
+  if (keuze === "nieuw") {
+    const nu = Date.now();
+    idee = { id: nu, titel: notitie.slice(0, 60), categorie: "business", tekst: "", links: [],
+      aangemaakt: nu, bijgewerkt: nu };
+    ideeen.push(idee);
+  } else {
+    idee = zoekIdee(Number(keuze));
+  }
+
+  if (gedeeld.url) {
+    idee.links.push({ url: gedeeld.url, notitie: notitie });
+  } else {
+    // Alleen tekst gedeeld (geen link): zet het bij de uitwerking
+    idee.tekst = (idee.tekst ? idee.tekst + "\n\n" : "") + gedeeld.notitie;
+  }
+  idee.bijgewerkt = Date.now();
+  gedeeld = null;
+  bewaarItems();
+  toonGedeeld();
+  openIdee(idee.id);
+}
+
 // ----- Starten -----
+document.getElementById("gedeeld-opslaan").addEventListener("click", slaGedeeldOp);
+document.getElementById("idee-stap-toevoegen").addEventListener("click", voegStapToe);
+document.getElementById("idee-nieuwe-stap").addEventListener("keydown", event => {
+  if (event.key === "Enter") voegStapToe();
+});
+document.getElementById("gedeeld-annuleren").addEventListener("click", () => {
+  gedeeld = null;
+  toonGedeeld();
+});
 document.getElementById("nieuw-idee").addEventListener("click", nieuwIdee);
 document.getElementById("idee-sluiten").addEventListener("click", sluitIdee);
 document.getElementById("idee-verwijder").addEventListener("click", verwijderIdee);

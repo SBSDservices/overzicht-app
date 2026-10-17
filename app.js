@@ -402,7 +402,12 @@ function maakRegel(item) {
   const tekst = document.createElement("span");
   tekst.className = "tekst";
   tekst.textContent = item.soort === "taak" ? "" : ICOON[item.soort] + " ";
-  const bijLes = item.lesId ? lesNaam(item.lesId) : item.vak; // (vak: van een oudere versie)
+  // Een label met waar het bij hoort: een les, een vak of een idee
+  let bijLes = item.lesId ? lesNaam(item.lesId) : item.vak;
+  if (item.ideeId) {
+    const idee = zoekIdee(item.ideeId); // staat in ideeen.js
+    bijLes = "💡 " + (idee && idee.titel ? idee.titel : "idee");
+  }
   if (bijLes && bijLes !== item.titel) tekst.appendChild(maakLabel(bijLes));
   tekst.appendChild(document.createTextNode(item.titel + " "));
   if (item.datum) tekst.appendChild(maakDatumInfo(item));
@@ -959,5 +964,11 @@ document.querySelectorAll("[data-stijl]").forEach(knop =>
 document.getElementById("datum-vandaag").textContent =
   new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
 
+// De service worker aanzetten (nodig om de app te kunnen installeren, zie sw.js)
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(fout => console.warn("Service worker lukt niet", fout));
+}
+
 pasVeldenAan();
 toonAlles();
+verwerkGedeeldeLink(); // staat in ideeen.js

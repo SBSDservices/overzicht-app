@@ -762,6 +762,35 @@ li.optie.botst { background-color: #fff9f5; }
 
 .prioriteit-knop:hover { opacity: 1; transform: scale(1.15); }
 
+/* Iets gedeeld vanuit een andere app */
+.gedeeld-blok {
+  border: 2px solid #4a3aff;
+  margin-bottom: 16px;
+}
+
+.gedeeld-blok h2 { font-size: 16px; margin-bottom: 6px; }
+
+.gedeeld-link {
+  font-size: 13px;
+  color: #555;
+  word-break: break-all;
+  margin: 0 0 8px;
+}
+
+#gedeeld-notitie { width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+
+.gedeeld-rij {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+#gedeeld-idee { flex: 1; min-width: 160px; }
+
+#idee-stappen { margin-bottom: 6px; }
+#idee-stappen .vak-label { display: none; } /* binnen het idee weet je al bij welk idee het hoort */
+
 /* ===== Ideeën ===== */
 .ideeen-balk {
   display: flex;

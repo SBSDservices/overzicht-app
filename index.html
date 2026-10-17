@@ -6,6 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mijn Overzicht</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- Om de app op je telefoon te installeren -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#4a3aff">
+  <link rel="icon" href="iconen/icoon-192.png">
+  <link rel="apple-touch-icon" href="iconen/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Overzicht">
 </head>
 
 <body>
@@ -172,6 +180,18 @@
 
       <!-- ===== IDEEËN ===== -->
       <section id="pagina-ideeen" class="pagina">
+        <!-- Verschijnt als je vanuit TikTok/Instagram iets naar de app hebt gedeeld -->
+        <div id="gedeeld-blok" class="kaart gedeeld-blok verborgen">
+          <h2>📥 Gedeeld met je app</h2>
+          <p id="gedeeld-link" class="gedeeld-link"></p>
+          <input id="gedeeld-notitie" placeholder="Waar gaat het over? (mag leeg)">
+          <div class="gedeeld-rij">
+            <select id="gedeeld-idee" aria-label="Bij welk idee"></select>
+            <button id="gedeeld-opslaan" class="hoofdknop">Opslaan</button>
+            <button id="gedeeld-annuleren" class="link-knop">Annuleren</button>
+          </div>
+        </div>
+
         <div class="ideeen-balk">
           <div class="schakelaar">
             <button data-categorie="alles">Alles</button>
@@ -204,6 +224,13 @@
               <input id="idee-link-notitie" placeholder="Waar gaat het over? (mag leeg)">
               <button type="submit">Link opslaan</button>
             </form>
+
+            <h4>🚀 Volgende stappen <span class="info">(komen in je takenlijst)</span></h4>
+            <ul id="idee-stappen" class="compact"></ul>
+            <div class="rij">
+              <input id="idee-nieuwe-stap" placeholder="Bijv. 'Concurrenten opzoeken', en druk op Enter">
+              <button type="button" id="idee-stap-toevoegen">➕</button>
+            </div>
 
             <h4>✍️ Uitwerking</h4>
             <textarea id="idee-tekst" placeholder="Werk je idee hier uit. Bijvoorbeeld:&#10;- Wat is het probleem?&#10;- Voor wie is het?&#10;- Hoe verdien je eraan?&#10;- Wat is de eerste stap?"></textarea>

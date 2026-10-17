@@ -17,6 +17,7 @@ let toegangsToken = null;   // de "sleutel" die je krijgt na inloggen (1 uur gel
 let driveBestandId = null;
 let opslaanTimer = null;
 let laatstBijgewerkt = null;
+let verloopTimer = null;
 
 // ----- Inloggen en uitloggen -----
 
@@ -25,13 +26,19 @@ function startGoogle() {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: GOOGLE_RECHTEN,
-    callback: naInloggen
+    callback: naInloggen,
+    error_callback: () => toonGoogleStatus() // bijv. venstertje dichtgeklikt
   });
 
   // Ben je in het afgelopen uur al ingelogd? Dan hoeft het niet opnieuw
   toegangsToken = laadToken();
   toonGoogleStatus();
-  if (toegangsToken) haalAllesOp();
+  if (toegangsToken) {
+    planVerlopen();
+    haalAllesOp();
+  } else if (wasVerbonden()) {
+    wachtOpKlikOmTeVernieuwen();
+  }
 }
 
 function logIn() {
@@ -45,22 +52,59 @@ function naInloggen(antwoord) {
   }
   toegangsToken = antwoord.access_token;
   bewaarToken(antwoord.access_token, antwoord.expires_in);
+  bewaarInstelling("googleWasVerbonden", "ja");
+  planVerlopen();
   haalAllesOp();
 }
 
 function logUit() {
   if (toegangsToken) google.accounts.oauth2.revoke(toegangsToken, () => {});
   vergeetToken();
+  try {
+    localStorage.removeItem("googleWasVerbonden");
+  } catch {}
   driveBestandId = null;
   googleAfspraken = [];
   toonGoogleStatus();
   toonAlles();
 }
 
-// De sleutel is maar een uur geldig. Daarna moet je opnieuw op "Verbinden" klikken.
+function wasVerbonden() {
+  return laadInstelling("googleWasVerbonden", "") === "ja";
+}
+
+// De sleutel is maar een uur geldig (dat bepaalt Google).
+// Als het uur om is, vragen we bij je volgende klik vanzelf een nieuwe sleutel.
 function verbindingVerlopen() {
   vergeetToken();
-  toonGoogleStatus("Verbinding verlopen.");
+  if (wasVerbonden()) {
+    wachtOpKlikOmTeVernieuwen();
+  } else {
+    toonGoogleStatus("Verbinding verlopen.");
+  }
+}
+
+// Zet een wekker voor het moment dat de sleutel verloopt
+function planVerlopen() {
+  clearTimeout(verloopTimer);
+  try {
+    const opgeslagen = JSON.parse(laadInstelling("googleToken", "null"));
+    if (opgeslagen) verloopTimer = setTimeout(verbindingVerlopen, Math.max(0, opgeslagen.verlooptOp - Date.now()));
+  } catch {}
+}
+
+// Een nieuwe sleutel vragen mag alleen als jij iets aanklikt (anders blokkeert de browser het venstertje).
+// Daarom wachten we op je eerstvolgende klik, waar dan ook op de pagina.
+function wachtOpKlikOmTeVernieuwen() {
+  toonGoogleStatus("Verbinding wordt vernieuwd zodra je ergens klikt…");
+  document.removeEventListener("click", vernieuwBijKlik, true);
+  document.addEventListener("click", vernieuwBijKlik, true);
+}
+
+function vernieuwBijKlik(event) {
+  document.removeEventListener("click", vernieuwBijKlik, true);
+  if (event.target.id === "google-knop") return; // die knop doet het zelf al
+  if (tokenClient && !toegangsToken) tokenClient.requestAccessToken({ prompt: "" });
 }
 
 function bewaarToken(token, seconden) {
@@ -330,6 +374,12 @@ function toonGoogleStatus(melding) {
     knop.textContent = "↻ Vernieuwen";
     knop.onclick = haalAllesOp;
     uitlog.classList.remove("verborgen");
+  } else if (wasVerbonden()) {
+    // Je was al eens verbonden: alleen de sleutel moet vernieuwd worden
+    tekst.textContent = melding || "Verbinding met Google vernieuwen…";
+    knop.textContent = "↻ Opnieuw verbinden";
+    knop.onclick = logIn;
+    uitlog.classList.add("verborgen");
   } else {
     tekst.textContent = (melding ? melding + " " : "") + "Verbind om je agenda te zien en je taken te synchroniseren.";
     knop.textContent = "Verbinden met Google";
@@ -346,8 +396,16 @@ setInterval(() => {
 }, 15 * 60 * 1000);
 
 document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+
+  // Lag de app een tijd in de achtergrond en is de sleutel intussen verlopen?
+  if (toegangsToken && !laadToken()) {
+    verbindingVerlopen();
+    return;
+  }
+
   const vijfMinutenGeleden = Date.now() - 5 * 60 * 1000;
-  if (document.visibilityState === "visible" && toegangsToken &&
+  if (toegangsToken &&
       (!laatstBijgewerkt || laatstBijgewerkt < vijfMinutenGeleden)) {
     haalAllesOp();
   }
