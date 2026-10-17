@@ -160,7 +160,7 @@ function alleItems(metZoeken = true) {
 function verrijkLes(les) {
   const naam = lesNamen[les.id] || "";
   const tentamen = items.some(item => item.soort === "toets" && item.lesId === les.id);
-  const huiswerk = items.filter(item => item.soort === "huiswerk" && item.lesId === les.id);
+  const huiswerk = items.filter(item => (item.soort === "huiswerk" || item.soort === "deadline") && item.lesId === les.id);
 
   if (!naam && !tentamen && !huiswerk.length) return les;
 
@@ -740,10 +740,7 @@ function toonAlles() {
   document.getElementById("stijl-knoppen").classList.toggle("verborgen", weergave === "jaar");
 
   if (pagina === "home") toonHome();         // staat in home.js
-  if (pagina === "todo") {
-    toonTodoPlannen(); // staat in leerplan.js
-    toonTeDoen();
-  }
+  if (pagina === "todo") toonTeDoen();
   if (pagina === "taken") toonTaken();
   if (pagina === "studie") toonStudie();     // staat in leerplan.js
   if (pagina === "ideeen") toonIdeeen();     // staat in ideeen.js
@@ -778,8 +775,13 @@ function kiesWeergave(nieuw) {
 function openToevoegen(datum) {
   const opDag = typeof datum === "string";
 
-  // Op de Studie-pagina voeg je een leerplan toe
-  if (pagina === "studie" && !opDag) return openPlanVenster(); // staat in leerplan.js
+  // Op de Studie-pagina: een leerplan, of een opdracht/huiswerk via het formulier daar
+  if (pagina === "studie" && !opDag) {
+    if (studieTab === "plannen") return openPlanVenster(); // staat in leerplan.js
+    kiesStudieTab("opdrachten");
+    document.getElementById("school-titel").focus();
+    return;
+  }
 
   // Kies alvast de soort die past bij de pagina waar je bent
   const standaard = { todo: "deadline", taken: "taak", agenda: "afspraak", home: "taak" };

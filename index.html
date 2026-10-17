@@ -48,72 +48,49 @@
     </div>
 
     <main>
-      <!-- ===== HOME: het dashboard ===== -->
+      <!-- ===== HOME: je agenda en je to-do ===== -->
       <section id="pagina-home" class="pagina">
         <div id="dash-samenvatting" class="samenvatting"></div>
 
-        <div class="dashboard">
-          <div class="kaart">
+        <div class="home-layout">
+          <div class="kaart home-agenda">
             <div class="kaart-kop">
-              <h2>📅 Vandaag</h2>
-              <button class="link-knop" data-ga-naar="agenda">Agenda →</button>
+              <h2>📅 Komende 7 dagen</h2>
+              <button class="link-knop" data-ga-naar="agenda">Hele agenda →</button>
             </div>
-            <ul id="dash-vandaag" class="compact"></ul>
+            <div id="home-rooster"></div>
           </div>
 
-          <div class="kaart">
-            <div class="kaart-kop">
-              <h2>✅ Te doen</h2>
-              <button class="link-knop" data-ga-naar="todo">Alles →</button>
+          <div class="home-todo">
+            <div class="kaart">
+              <div class="kaart-kop">
+                <h2>✅ To-do</h2>
+                <button class="link-knop" data-ga-naar="todo">Alles →</button>
+              </div>
+              <div id="home-todo"></div>
             </div>
-            <ul id="dash-todo" class="compact"></ul>
-          </div>
 
-          <div class="kaart">
-            <div class="kaart-kop">
-              <h2>🔥 Belangrijk</h2>
-              <button class="link-knop" data-ga-naar="taken">Takenlijst →</button>
+            <div class="kaart">
+              <div class="kaart-kop">
+                <h2>🔥 Belangrijk</h2>
+                <button class="link-knop" data-ga-naar="taken">Takenlijst →</button>
+              </div>
+              <ul id="dash-belangrijk" class="compact"></ul>
             </div>
-            <ul id="dash-belangrijk" class="compact"></ul>
-          </div>
 
-          <div class="kaart">
-            <div class="kaart-kop">
-              <h2>📝 Toetsen &amp; deadlines</h2>
-              <span class="info">komende 2 weken</span>
+            <div class="kaart">
+              <div class="kaart-kop">
+                <h2>💪 Kan vandaag</h2>
+                <span class="info">hoeft niet, mag wel</span>
+              </div>
+              <ul id="lijst-optie" class="compact"></ul>
             </div>
-            <ul id="dash-binnenkort" class="compact"></ul>
-          </div>
-
-          <div class="kaart">
-            <div class="kaart-kop">
-              <h2>💪 Kan vandaag</h2>
-              <span class="info">hoeft niet, mag wel</span>
-            </div>
-            <ul id="lijst-optie" class="compact"></ul>
-          </div>
-
-          <div class="kaart">
-            <div class="kaart-kop">
-              <h2>💡 Laatste ideeën</h2>
-              <button class="link-knop" data-ga-naar="ideeen">Ideeën →</button>
-            </div>
-            <ul id="dash-ideeen" class="compact"></ul>
           </div>
         </div>
       </section>
 
       <!-- ===== TO-DO: alles met een datum ===== -->
       <section id="pagina-todo" class="pagina">
-        <!-- Je leerplannen in het kort -->
-        <div class="kaart todo-plannen">
-          <div class="kaart-kop">
-            <h2>📚 Leerplannen</h2>
-            <button class="hoofdknop nieuw-plan-knop">➕ Leerplan maken</button>
-          </div>
-          <div id="todo-plannen"></div>
-        </div>
-
         <p class="info pagina-uitleg">Per dag wat je moet doen. Scroll of veeg opzij voor de volgende dagen.</p>
         <p id="todo-melding" class="alles-af verborgen"></p>
         <div id="lijst-te-doen" class="dagen-kolommen"></div>
@@ -130,28 +107,73 @@
         <ul id="lijst-doel"></ul>
       </section>
 
-      <!-- ===== STUDIE: leerplannen voor tentamens ===== -->
+      <!-- ===== STUDIE: alles voor school ===== -->
       <section id="pagina-studie" class="pagina">
-        <div id="studie-leeg" class="kaart studie-leeg">
-          <h2>📚 Maak een leerplan voor je tentamens</h2>
-          <p>Kies een tentamen, vul in wat je moet leren (bijvoorbeeld hoofdstuk 1 t/m 7), en de app verdeelt het over de dagen
-            die je nog hebt. Op het eind houd je dagen over om alles te herhalen.</p>
-          <button class="hoofdknop nieuw-plan-knop">➕ Nieuw leerplan</button>
+        <div class="schakelaar studie-tabs">
+          <button data-studie="rooster">🗓️ Rooster</button>
+          <button data-studie="opdrachten">📋 Opdrachten &amp; huiswerk</button>
+          <button data-studie="plannen">📚 Leerplannen</button>
         </div>
 
-        <div id="studie-inhoud" class="studie-layout">
-          <div>
+        <!-- Tabblad: schoolrooster -->
+        <div id="studie-rooster-paneel" class="studie-paneel">
+          <div class="studie-nav">
+            <button id="studie-vorige" title="Vorige week">‹</button>
+            <button id="studie-volgende" title="Volgende week">›</button>
+            <button id="studie-deze-week">Deze week</button>
+            <strong id="studie-week-titel"></strong>
+          </div>
+          <p class="info">Klik op een les om huiswerk, een opdracht of een toets toe te voegen.</p>
+          <div id="studie-rooster"></div>
+        </div>
+
+        <!-- Tabblad: opdrachten en huiswerk op een rijtje -->
+        <div id="studie-opdrachten-paneel" class="studie-paneel">
+          <form id="school-formulier" class="kaart school-formulier">
+            <select id="school-soort" aria-label="Soort">
+              <option value="deadline">📋 Opdracht (inleveren)</option>
+              <option value="huiswerk">📖 Huiswerk</option>
+              <option value="toets">📝 Toets / overhoring</option>
+            </select>
+            <input id="school-titel" placeholder="Wat? Bijv. 'Verslag marketing'" required>
+            <input id="school-vak" placeholder="Vak" list="school-vakken" aria-label="Vak">
+            <datalist id="school-vakken"></datalist>
+            <label class="veld">Inleveren op <input id="school-datum" type="date" required></label>
+            <button type="submit" class="hoofdknop">➕ Toevoegen</button>
+          </form>
+
+          <div class="studie-twee">
+            <div>
+              <h2>📋 Opdrachten om in te leveren</h2>
+              <div id="studie-opdrachten"></div>
+            </div>
+            <div>
+              <h2>📖 Huiswerk &amp; 📝 toetsen</h2>
+              <div id="studie-huiswerk"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabblad: leerplannen -->
+        <div id="studie-plannen-paneel" class="studie-paneel">
+          <div id="studie-leeg" class="kaart studie-leeg">
+            <h2>📚 Maak een leerplan voor je tentamens</h2>
+            <p>Kies een tentamen, typ wat je moet doen (bijvoorbeeld hoofdstuk 1 t/m 7 samenvatten, een oefentoets maken)
+              en vink aan op welke dag je wat doet.</p>
+            <button class="hoofdknop nieuw-plan-knop">➕ Nieuw leerplan</button>
+          </div>
+
+          <div id="studie-inhoud">
             <div class="sectie-kop">
-              <h2>📅 Per dag</h2>
+              <h2>📚 Je leerplannen</h2>
               <button class="hoofdknop nieuw-plan-knop">➕ Nieuw leerplan</button>
             </div>
-            <div id="studie-per-dag" class="dagen-kolommen"></div>
-          </div>
-          <div>
+            <div id="studie-per-vak" class="plannen-raster"></div>
+
             <div class="sectie-kop">
-              <h2>📚 Per vak</h2>
+              <h2>📅 Per dag</h2>
             </div>
-            <div id="studie-per-vak"></div>
+            <div id="studie-per-dag" class="dagen-kolommen"></div>
           </div>
         </div>
       </section>
@@ -264,7 +286,6 @@
         <option value="optie">💪 Optie (kan, hoeft niet)</option>
         <option value="doel">🎯 Doel</option>
         <option value="vrij">🌴 Vrij / vakantie</option>
-        <option value="leerplan">📚 Leerplan voor een tentamen…</option>
       </select>
 
       <label id="veld-herhaal" class="veld">
@@ -359,8 +380,13 @@
 
     <h4>📖 Te doen voor deze les</h4>
     <ul id="les-huiswerk"></ul>
-    <form id="les-huiswerk-formulier" class="rij">
-      <input id="les-nieuw-huiswerk" placeholder="Bijv. H3 opgave 1–10 maken, opdracht inleveren…">
+    <form id="les-huiswerk-formulier" class="les-formulier">
+      <select id="les-soort" aria-label="Soort">
+        <option value="huiswerk">📖 Huiswerk</option>
+        <option value="deadline">📋 Opdracht inleveren</option>
+      </select>
+      <input id="les-nieuw-huiswerk" placeholder="Bijv. H3 opgave 1–10 maken">
+      <label class="veld">af op <input id="les-taak-datum" type="date" aria-label="Datum"></label>
       <button type="submit">Toevoegen</button>
     </form>
 

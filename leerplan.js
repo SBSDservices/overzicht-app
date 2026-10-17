@@ -35,14 +35,144 @@ function planItems(planId) {
 
 // ----- De pagina "Studie" -----
 
+// De Studie-pagina heeft drie tabbladen: rooster, opdrachten & huiswerk, leerplannen
+// (deze worden pas ingevuld als je de pagina opent, want app.js is dan pas geladen)
+let studieTab = null;
+let studieFocus = null; // welke week je in het schoolrooster bekijkt
+
 function toonStudie() {
+  if (!studieTab) studieTab = laadInstelling("studieTab", "rooster");
+  if (!studieFocus) studieFocus = vandaag();
+
+  document.querySelectorAll("[data-studie]").forEach(knop =>
+    knop.classList.toggle("actief", knop.dataset.studie === studieTab));
+  for (const tab of ["rooster", "opdrachten", "plannen"]) {
+    document.getElementById("studie-" + tab + "-paneel").classList.toggle("verborgen", tab !== studieTab);
+  }
+
+  if (studieTab === "rooster") toonStudieRooster();
+  if (studieTab === "opdrachten") toonOpdrachten();
+  if (studieTab === "plannen") toonPlannen();
+}
+
+function kiesStudieTab(tab) {
+  studieTab = tab;
+  bewaarInstelling("studieTab", tab);
+  toonStudie();
+}
+
+// Hoort dit bij school? (lessen, toetsen, huiswerk, opdrachten, leerplannen)
+function isSchool(item) {
+  return item.bronType === "school" || ["huiswerk", "deadline", "toets"].includes(item.soort) ||
+    isToets(item) || Boolean(item.planId);
+}
+
+// ----- Tabblad: schoolrooster -----
+
+function toonStudieRooster() {
+  const maandag = startVanWeek(studieFocus);
+  const datums = [0, 1, 2, 3, 4, 5, 6].map(i => plusDagen(maandag, i));
+  document.getElementById("studie-week-titel").textContent = "Week " + weekNummer(maandag) + " · " +
+    new Date(datums[0]).toLocaleDateString("nl-NL", { day: "numeric", month: "short" }) + " – " +
+    new Date(datums[6]).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+
+  const vak = document.getElementById("studie-rooster");
+  vak.innerHTML = "";
+  vak.appendChild(maakWeekRooster(datums, alleItems().filter(isSchool))); // staat in weergaven.js
+}
+
+// ----- Tabblad: opdrachten en huiswerk op een rijtje -----
+
+function bekendeVakken() {
+  const namen = new Set();
+  for (const plan of leerplannen) namen.add(plan.vak);
+  for (const item of items) if (item.vak) namen.add(item.vak);
+  for (const naam of Object.values(lesNamen)) namen.add(naam);
+  return [...namen].filter(Boolean).sort();
+}
+
+function toonOpdrachten() {
+  // Vakken die je al eens hebt gebruikt, om snel te kiezen
+  const lijst = document.getElementById("school-vakken");
+  lijst.innerHTML = "";
+  for (const naam of bekendeVakken()) lijst.appendChild(new Option(naam));
+
+  const opdrachten = items.filter(item => item.soort === "deadline" && pastBijZoeken(item));
+  toonOpRij("studie-opdrachten", opdrachten, "Nog geen opdrachten. Voeg ze hierboven toe, of klik in je rooster op een les.");
+
+  // Huiswerk (zonder de taken uit je leerplannen, die staan bij Leerplannen) en toetsen
+  const huiswerk = items.filter(item => item.soort === "huiswerk" && !item.planId && pastBijZoeken(item));
+  toonOpRij("studie-huiswerk", huiswerk, "Geen huiswerk.");
+
+  const toetsen = komendeTentamens().filter(pastBijZoeken);
+  const vak = document.getElementById("studie-huiswerk");
+  if (toetsen.length) {
+    const kop = document.createElement("h3");
+    kop.className = "groep-kop";
+    kop.textContent = "📝 Komende toetsen";
+    const ul = document.createElement("ul");
+    ul.className = "compact";
+    for (const toets of toetsen) {
+      const li = maakRegelVoor(toets);
+      const tijd = li.querySelector(".tijd");
+      if (tijd) tijd.textContent = mooieDatum(toets.datum) + (toets.begintijd ? " " + toets.begintijd : "");
+      ul.appendChild(li);
+    }
+    vak.append(kop, ul);
+  }
+}
+
+// Een lijst op een rijtje: te laat, deze week, later, en wat je de afgelopen 2 weken hebt afgerond
+function toonOpRij(id, lijst, leegTekst) {
+  const vak = document.getElementById(id);
+  vak.innerHTML = "";
+
+  const groepen = [
+    { titel: "⚠️ Te laat", taken: lijst.filter(item => !item.klaar && dagenTot(item.datum) < 0) },
+    { titel: "Deze week", taken: lijst.filter(item => !item.klaar && dagenTot(item.datum) >= 0 && dagenTot(item.datum) < 7) },
+    { titel: "Later", taken: lijst.filter(item => !item.klaar && dagenTot(item.datum) >= 7) },
+    { titel: "✓ Af", taken: lijst.filter(item => item.klaar && dagenTot(item.datum) >= -14) }
+  ];
+
+  for (const groep of groepen) {
+    if (groep.taken.length === 0) continue;
+    const kop = document.createElement("h3");
+    kop.className = "groep-kop";
+    kop.textContent = groep.titel + " · " + groep.taken.length;
+    const ul = document.createElement("ul");
+    ul.className = "compact";
+    for (const item of groep.taken.sort((a, b) => a.datum.localeCompare(b.datum))) ul.appendChild(maakRegel(item));
+    vak.append(kop, ul);
+  }
+  if (vak.children.length === 0) vak.innerHTML = '<p class="leeg">' + leegTekst + "</p>";
+}
+
+function voegSchoolTaakToe(event) {
+  event.preventDefault();
+  items.push({
+    id: Date.now(),
+    soort: document.getElementById("school-soort").value,
+    titel: document.getElementById("school-titel").value.trim(),
+    vak: document.getElementById("school-vak").value.trim(),
+    datum: document.getElementById("school-datum").value,
+    klaar: false
+  });
+  bewaarItems();
+  toonAlles();
+  document.getElementById("school-titel").value = "";
+  document.getElementById("school-titel").focus();
+}
+
+// ----- Tabblad: leerplannen -----
+
+function toonPlannen() {
   const leeg = leerplannen.length === 0;
   document.getElementById("studie-leeg").classList.toggle("verborgen", !leeg);
   document.getElementById("studie-inhoud").classList.toggle("verborgen", leeg);
   if (leeg) return;
 
-  toonStudiePerDag();
   toonStudiePerVak();
+  toonStudiePerDag();
 }
 
 // Per dag: wat moet je voor elk vak doen?
@@ -478,6 +608,26 @@ function vanToevoegenNaarPlan() {
 
 // ----- Starten -----
 document.querySelectorAll(".nieuw-plan-knop").forEach(knop => knop.addEventListener("click", () => openPlanVenster()));
+document.querySelectorAll("[data-studie]").forEach(knop =>
+  knop.addEventListener("click", () => kiesStudieTab(knop.dataset.studie)));
+document.getElementById("studie-vorige").addEventListener("click", () => {
+  studieFocus = plusDagen(studieFocus, -7);
+  toonStudie();
+});
+document.getElementById("studie-volgende").addEventListener("click", () => {
+  studieFocus = plusDagen(studieFocus, 7);
+  toonStudie();
+});
+document.getElementById("studie-deze-week").addEventListener("click", () => {
+  studieFocus = vandaag();
+  toonStudie();
+});
+document.getElementById("school-formulier").addEventListener("submit", voegSchoolTaakToe);
+document.getElementById("school-soort").addEventListener("change", () => {
+  const soort = document.getElementById("school-soort").value;
+  document.querySelector("#school-formulier .veld").firstChild.textContent =
+    soort === "deadline" ? "Inleveren op " : soort === "toets" ? "Op " : "Af op ";
+});
 document.getElementById("plan-tentamen").addEventListener("change", kiesPlanTentamen);
 document.getElementById("plan-datum").addEventListener("change", toonPlanRaster);
 document.getElementById("plan-taak-toevoegen").addEventListener("click", () => voegPlanTaakToe());

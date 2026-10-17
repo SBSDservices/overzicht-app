@@ -1,17 +1,25 @@
 // ===== HET LES-VENSTER =====
 // Dit venstertje opent als je op een les uit je rooster klikt.
-// Je kunt er huiswerk ("wat moet ik voor deze les doen") toevoegen,
+// Je kunt er huiswerk of een opdracht (om in te leveren) aan toevoegen,
 // de les een naam geven zoals in Magister, en aangeven dat het een tentamen is.
 
 let huidigeLesId = null; // de les die nu open staat
 
 function openLes(lesId) {
   huidigeLesId = lesId;
+  const les = huidigeLes();
   document.getElementById("les-venster").showModal();
   document.getElementById("les-nieuw-huiswerk").value = "";
+  document.getElementById("les-soort").value = "huiswerk";
+  document.getElementById("les-taak-datum").value = les ? les.datum : ""; // standaard: af voor deze les
   document.getElementById("les-naam").value = lesNamen[lesId] || "";
   vernieuwLesVenster();
   document.getElementById("les-nieuw-huiswerk").focus();
+}
+
+// Alles wat aan deze les hangt: huiswerk en opdrachten
+function lesTaken(lesId) {
+  return items.filter(item => item.lesId === lesId && (item.soort === "huiswerk" || item.soort === "deadline"));
 }
 
 function huidigeLes() {
@@ -38,9 +46,9 @@ function vernieuwLesVenster() {
   // Wat je voor deze les moet doen
   const lijst = document.getElementById("les-huiswerk");
   lijst.innerHTML = "";
-  const huiswerk = items.filter(item => item.soort === "huiswerk" && item.lesId === les.id);
-  if (huiswerk.length === 0) lijst.innerHTML = '<p class="leeg">Nog niks. Typ hieronder wat je moet doen.</p>';
-  for (const item of huiswerk) lijst.appendChild(maakRegel(item));
+  const taken = lesTaken(les.id).sort((a, b) => a.datum.localeCompare(b.datum));
+  if (taken.length === 0) lijst.innerHTML = '<p class="leeg">Nog niks. Kies hieronder huiswerk of een opdracht.</p>';
+  for (const item of taken) lijst.appendChild(maakRegel(item));
 }
 
 function voegLesHuiswerkToe(event) {
@@ -52,10 +60,11 @@ function voegLesHuiswerkToe(event) {
   const les = huidigeLes();
   items.push({
     id: Date.now(),
-    soort: "huiswerk",
+    soort: document.getElementById("les-soort").value, // "huiswerk" of "deadline" (opdracht)
     titel: tekst,
-    datum: les.datum, // af hebben vóór deze les
+    datum: document.getElementById("les-taak-datum").value || les.datum,
     lesId: les.id,
+    vak: lesNamen[les.id] || "",
     klaar: false
   });
 

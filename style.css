@@ -928,6 +928,106 @@ li.optie.botst { background-color: #fff9f5; }
 
 .link-knop.gevaar { color: #e03131; }
 
+/* ===== Home: agenda links, to-do rechts ===== */
+.home-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .home-layout { grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); }
+}
+
+.home-agenda { min-width: 0; }
+.home-agenda .rooster-scroll { margin-bottom: 0; border: 1px solid #f1f3f5; }
+
+.home-todo {
+  display: grid;
+  gap: 14px;
+}
+
+.home-todo .dag-blok {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background-color: #f8f9fa;
+}
+
+button.teller {
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+button.teller:hover { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+
+/* ===== Studie: tabbladen ===== */
+.studie-tabs {
+  margin: 16px 0 14px;
+  max-width: 620px;
+}
+
+.studie-tabs button { padding: 8px 10px; }
+
+.studie-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.studie-nav button { cursor: pointer; padding: 6px 12px; font-size: 15px; }
+.studie-nav strong { margin-left: 6px; }
+
+.school-formulier {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 16px;
+}
+
+#school-titel { flex: 2 1 220px; }
+#school-vak { flex: 1 1 140px; }
+
+.studie-twee {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 900px) {
+  .studie-twee { grid-template-columns: 1fr 1fr; }
+}
+
+.studie-twee h2 { margin-bottom: 8px; }
+
+h3.groep-kop {
+  font-size: 14px;
+  color: #555;
+  margin: 14px 0 6px;
+}
+
+.plannen-raster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+/* Het formulier in het les-venster */
+.les-formulier {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+}
+
+#les-nieuw-huiswerk { flex: 1 1 200px; min-width: 0; }
+
 /* ===== Dashboard (Home) ===== */
 .samenvatting h2 {
   font-size: 22px;

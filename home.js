@@ -1,18 +1,12 @@
-// ===== HOME: HET DASHBOARD =====
-// Een overzicht van je dag: wat er vandaag is, wat je moet doen, wat belangrijk is.
+// ===== HOME: JE HOOFDPAGINA =====
+// Links je agenda van deze week (schoolrooster + Google Agenda), rechts je to-do.
 
 function toonHome() {
-  const alle = alleItems();
-  const vandaagItems = itemsOpDag(vandaag(), alle);
-
-  toonDashVandaag(vandaagItems);
-  const todo = toonDashTodo();
+  const todo = toonHomeTodo();
   const belangrijk = toonDashBelangrijk();
-  const binnenkort = toonDashBinnenkort();
-  toonOpties(alle); // staat in app.js
-  toonDashIdeeen();
-
-  toonSamenvatting(todo, belangrijk, binnenkort);
+  toonOpties(alleItems(false)); // staat in app.js
+  toonHomeRooster();
+  toonSamenvatting(todo, belangrijk);
 }
 
 // Een groet die past bij het moment van de dag
@@ -24,7 +18,7 @@ function groet() {
   return "Goedenavond";
 }
 
-function toonSamenvatting(todo, belangrijk, binnenkort) {
+function toonSamenvatting(todo, belangrijk) {
   const vak = document.getElementById("dash-samenvatting");
   vak.innerHTML = "";
 
@@ -32,18 +26,20 @@ function toonSamenvatting(todo, belangrijk, binnenkort) {
   titel.textContent = groet() + "! 👋";
   vak.appendChild(titel);
 
+  const toetsen = komendeTentamens().filter(item => dagenTot(item.datum) <= 14).length; // staat in leerplan.js
   const blokjes = [
-    { getal: todo.teLaat, tekst: "te laat", soort: todo.teLaat ? "rood" : "" },
-    { getal: todo.vandaag, tekst: "vandaag te doen", soort: "" },
-    { getal: belangrijk, tekst: "belangrijke taken", soort: belangrijk ? "oranje" : "" },
-    { getal: binnenkort.toetsen, tekst: binnenkort.toetsen === 1 ? "toets binnenkort" : "toetsen binnenkort", soort: "" }
+    { getal: todo.vandaag, tekst: "vandaag te doen", pagina: "todo" },
+    { getal: todo.teLaat, tekst: "te laat", pagina: "todo" },
+    { getal: belangrijk, tekst: "belangrijke taken", pagina: "taken" },
+    { getal: toetsen, tekst: toetsen === 1 ? "toets in 2 weken" : "toetsen in 2 weken", pagina: "studie" }
   ];
 
   const rij = document.createElement("div");
   rij.className = "teller-rij";
   for (const blokje of blokjes) {
-    const teller = document.createElement("div");
-    teller.className = "teller " + blokje.soort;
+    const teller = document.createElement("button");
+    teller.className = "teller";
+    teller.onclick = () => kiesPagina(blokje.pagina);
     teller.innerHTML = "<strong></strong><span></span>";
     teller.querySelector("strong").textContent = blokje.getal;
     teller.querySelector("span").textContent = blokje.tekst;
@@ -52,78 +48,46 @@ function toonSamenvatting(todo, belangrijk, binnenkort) {
   vak.appendChild(rij);
 }
 
-// 📅 Vandaag: lessen, afspraken en toetsen van vandaag, met wat er nu/straks is
-function toonDashVandaag(vandaagItems) {
-  const lijst = document.getElementById("dash-vandaag");
-  lijst.innerHTML = "";
-
-  const afspraken = vandaagItems.filter(item =>
-    item.soort === "afspraak" || item.soort === "toets" || item.soort === "vrij");
-
-  if (afspraken.length === 0) {
-    lijst.innerHTML = '<p class="leeg">Niks gepland vandaag.</p>';
-    return;
-  }
-
-  const nu = tijdTekst(new Date());
-  let strakGemarkeerd = false;
-  const overlappen = zoekOverlap(afspraken);
-
-  for (const afspraak of afspraken) {
-    const li = maakRegelVoor(afspraak, overlappen.get(afspraak) || []);
-
-    if (heeftTijd(afspraak)) {
-      const voorbij = (afspraak.eindtijd || afspraak.begintijd) <= nu;
-      const bezig = afspraak.begintijd <= nu && !voorbij;
-      if (voorbij) li.classList.add("voorbij");
-      if (bezig) li.classList.add("nu-bezig");
-      // De eerstvolgende afspraak krijgt "straks"
-      if (!voorbij && !bezig && !strakGemarkeerd) {
-        li.classList.add("straks");
-        strakGemarkeerd = true;
-      }
-    }
-    lijst.appendChild(li);
-  }
+// 📅 Het rooster van vandaag en de 6 dagen erna, met alles erin (school, Google Agenda, je eigen afspraken)
+function toonHomeRooster() {
+  const vak = document.getElementById("home-rooster");
+  vak.innerHTML = "";
+  const datums = [0, 1, 2, 3, 4, 5, 6].map(i => plusDagen(vandaag(), i));
+  vak.appendChild(maakWeekRooster(datums, alleItems(false))); // staat in weergaven.js
 }
 
-// ✅ Te doen: wat te laat is, en wat vandaag moet
-function toonDashTodo() {
-  const lijst = document.getElementById("dash-todo");
-  lijst.innerHTML = "";
+// ✅ Wat je moet doen: te laat, vandaag, morgen en de rest van de week
+function toonHomeTodo() {
+  const vak = document.getElementById("home-todo");
+  vak.innerHTML = "";
 
   const open = [];
   for (const item of items) {
     if (!["taak", "deadline", "huiswerk", "toets"].includes(item.soort) || !item.datum) continue;
     if (item.herhaal) {
-      if (valtOp(item, vandaag())) open.push(herhaling(item, vandaag()));
+      for (let i = 0; i < 7; i++) {
+        const datum = plusDagen(vandaag(), i);
+        if (valtOp(item, datum)) open.push(herhaling(item, datum));
+      }
     } else {
       open.push(item);
     }
   }
 
-  const teLaat = open.filter(item => groepVoor(item) === "te-laat" && !item.klaar);
-  const vandaagLijst = open.filter(item => groepVoor(item) === "vandaag");
-  const morgen = open.filter(item => groepVoor(item) === "morgen" && !item.klaar);
+  const teLaat = open.filter(item => groepVoor(item) === "te-laat");
+  if (teLaat.length) vak.appendChild(maakDagBlok("⚠️ Te laat", teLaat, null)); // staat in app.js
 
-  const tonen = teLaat.concat(vandaagLijst.sort((a, b) => a.klaar - b.klaar));
-  for (const item of tonen) {
-    const li = maakRegel(item);
-    if (teLaat.includes(item)) li.classList.add("is-te-laat");
-    lijst.appendChild(li);
+  // Vandaag en morgen altijd, de dagen daarna alleen als er iets staat
+  let aantalVandaag = 0;
+  for (let i = 0; i < 7; i++) {
+    const datum = plusDagen(vandaag(), i);
+    const taken = open.filter(item => item.datum === datum && groepVoor(item));
+    if (i === 0) aantalVandaag = taken.filter(item => !item.klaar).length;
+    if (taken.length === 0 && i > 1) continue;
+    vak.appendChild(maakDagBlok(dagKop(datum), taken, datum, true));
   }
 
-  if (tonen.length === 0) {
-    lijst.innerHTML = '<p class="leeg">Niks voor vandaag 🎉' +
-      (morgen.length ? " Morgen: " + morgen.length + " ding" + (morgen.length > 1 ? "en" : "") + "." : "") + "</p>";
-  } else if (morgen.length) {
-    const meer = document.createElement("p");
-    meer.className = "info";
-    meer.textContent = "Morgen: " + morgen.length + " ding" + (morgen.length > 1 ? "en" : "");
-    lijst.appendChild(meer);
-  }
-
-  return { teLaat: teLaat.length, vandaag: vandaagLijst.filter(item => !item.klaar).length };
+  return { teLaat: teLaat.filter(item => !item.klaar).length, vandaag: aantalVandaag };
 }
 
 // 🔥 Belangrijk: de taken uit je takenlijst met een vlammetje
@@ -141,57 +105,4 @@ function toonDashBelangrijk() {
     lijst.innerHTML = '<p class="leeg">Geen belangrijke taken. Klik in je takenlijst op ☆ om iets belangrijk te maken.</p>';
   }
   return belangrijk.length;
-}
-
-// 📝 Toetsen en deadlines in de komende 2 weken
-function toonDashBinnenkort() {
-  const lijst = document.getElementById("dash-binnenkort");
-  lijst.innerHTML = "";
-
-  // Toetsen uit je agenda (ook Google) en je eigen deadlines
-  const toetsen = komendeTentamens().filter(item => !item.klaar); // staat in leerplan.js
-  const deadlines = items.filter(item => item.soort === "deadline" && item.datum && !item.klaar);
-  const binnenkort = toetsen.concat(deadlines)
-    .filter(item => dagenTot(item.datum) >= 0 && dagenTot(item.datum) <= 14)
-    .sort((a, b) => a.datum.localeCompare(b.datum) || (a.begintijd || "").localeCompare(b.begintijd || ""));
-
-  for (const item of binnenkort.slice(0, 6)) {
-    if (item.bron === "google") {
-      // Een toets uit Google: laat de dag erbij zien
-      const li = maakRegelVoor(item);
-      li.querySelector(".tijd").textContent = mooieDatum(item.datum) + (item.begintijd ? " " + item.begintijd : "");
-      lijst.appendChild(li);
-    } else {
-      lijst.appendChild(maakRegel(item));
-    }
-  }
-  if (binnenkort.length > 6) lijst.insertAdjacentHTML("beforeend",
-    '<p class="info">+' + (binnenkort.length - 6) + " meer bij To-do</p>");
-  if (binnenkort.length === 0) lijst.innerHTML = '<p class="leeg">Geen toetsen of deadlines in de komende 2 weken.</p>';
-
-  return { toetsen: binnenkort.filter(item => isToets(item)).length };
-}
-
-// 💡 De 3 ideeën waar je het laatst aan hebt gewerkt
-function toonDashIdeeen() {
-  const lijst = document.getElementById("dash-ideeen");
-  lijst.innerHTML = "";
-
-  const laatste = [...ideeen].sort((a, b) => b.bijgewerkt - a.bijgewerkt).slice(0, 3);
-  for (const idee of laatste) {
-    const li = document.createElement("li");
-    li.className = "idee-kaart";
-    li.onclick = () => {
-      kiesPagina("ideeen");
-      openIdee(idee.id); // staat in ideeen.js
-    };
-    const titel = document.createElement("strong");
-    titel.textContent = idee.titel || "Naamloos idee";
-    const info = document.createElement("span");
-    info.className = "info";
-    info.textContent = CATEGORIEEN[idee.categorie] + (idee.links.length ? " · 🔗 " + idee.links.length : "");
-    li.append(titel, info);
-    lijst.appendChild(li);
-  }
-  if (laatste.length === 0) lijst.innerHTML = '<p class="leeg">Nog geen ideeën.</p>';
 }
