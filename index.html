@@ -284,10 +284,12 @@
     <form method="dialog">
       <button class="venster-sluiten" title="Sluiten">✕</button>
     </form>
-    <h3>📚 Nieuw leerplan</h3>
+    <h3 id="plan-venster-titel">📚 Nieuw leerplan</h3>
 
     <form id="plan-formulier">
-      <label class="plan-veld">Voor welk tentamen?
+      <!-- Stap 1: voor welke toets -->
+      <h4>1. 📝 Voor welke toets?</h4>
+      <label class="plan-veld">Tentamen uit je agenda
         <select id="plan-tentamen"></select>
       </label>
       <div class="plan-rij">
@@ -299,19 +301,31 @@
         </label>
       </div>
 
-      <label class="plan-veld">Wat moet je leren? <span class="info">(één per regel)</span>
-        <textarea id="plan-onderdelen" rows="5" placeholder="Hoofdstuk 1&#10;Hoofdstuk 2&#10;…"></textarea>
-      </label>
-      <div class="plan-snel">
-        Snel invullen:
-        <input id="plan-aantal" type="number" min="1" max="40" value="7" aria-label="Aantal hoofdstukken">
-        <button type="button" id="plan-vul-hoofdstukken">hoofdstukken</button>
+      <!-- Stap 2: wat moet je doen -->
+      <h4>2. ✍️ Wat moet je doen?</h4>
+      <div class="plan-snel-blok">
+        <div class="plan-snel">
+          <input id="plan-aantal" type="number" min="1" max="40" value="7" aria-label="Aantal">
+          <input id="plan-prefix" value="Hoofdstuk" aria-label="Hoofdstuk, unit, les…">
+          <span>en per stuk:</span>
+        </div>
+        <div id="plan-acties" class="dagen-kiezer">
+          <label><input type="checkbox" value="samenvatten" checked> samenvatten</label>
+          <label><input type="checkbox" value="leren" checked> leren</label>
+          <label><input type="checkbox" value="oefenvragen maken"> oefenvragen maken</label>
+          <label><input type="checkbox" value="begrippen leren"> begrippen leren</label>
+        </div>
+        <button type="button" id="plan-genereer">➕ Voeg toe aan de lijst</button>
       </div>
 
-      <label class="plan-veld">Wat doe je per onderdeel?
-        <input id="plan-actie" value="samenvatten en leren">
-      </label>
+      <ul id="plan-rijen"></ul>
+      <div class="rij">
+        <input id="plan-losse-taak" placeholder="Losse taak, bijv. 'Oefententamen maken'">
+        <button type="button" id="plan-losse-toevoegen">➕</button>
+      </div>
 
+      <!-- Stap 3: verdelen -->
+      <h4>3. 📅 Verdelen over de dagen</h4>
       <div class="plan-rij">
         <label class="plan-veld">Beginnen op
           <input id="plan-start" type="date">
@@ -335,12 +349,13 @@
           </span>
         </div>
       </div>
+      <p class="info">De app verdeelt alles automatisch. Wil je een taak op een andere dag? Pas de datum in de lijst hierboven aan.</p>
 
       <h4>Zo ziet je planning eruit</h4>
       <p id="plan-melding" class="overlap"></p>
       <ul id="plan-voorbeeld" class="compact"></ul>
 
-      <button type="submit" class="hoofdknop">✓ Leerplan opslaan</button>
+      <button type="submit" class="hoofdknop" id="plan-opslaan">✓ Leerplan opslaan</button>
     </form>
   </dialog>
 
