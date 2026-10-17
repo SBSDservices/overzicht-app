@@ -1,5 +1,5 @@
 // ===== HOME: HET DASHBOARD =====
-// In één oogopslag: wat moet er vandaag en morgen af, wat staat er vandaag in je agenda.
+// Links je rooster van de komende 7 dagen, rechts wat er vandaag en morgen af moet.
 
 function toonHome() {
   const open = takenMetDatum();
@@ -12,7 +12,7 @@ function toonHome() {
   document.getElementById("dash-vandaag-titel").textContent = "Vandaag · " + mooieDatum(vandaag());
   document.getElementById("dash-morgen-titel").textContent = "Morgen · " + mooieDatum(plusDagen(vandaag(), 1));
 
-  toonDashAgenda();
+  toonHomeRooster();
   const belangrijk = toonDashBelangrijk();
   toonOpties(alleItems(false)); // staat in app.js
   // Geen sport of andere opties vandaag? Dan het kaartje helemaal weglaten
@@ -106,35 +106,15 @@ function toonSamenvatting(aantallen, belangrijk) {
   vak.appendChild(rij);
 }
 
-// Wat er vandaag in je agenda staat: lessen, afspraken, vakantie, toetsen
-function toonDashAgenda() {
-  const lijst = document.getElementById("dash-agenda");
-  lijst.innerHTML = "";
-
-  const vandaagItems = itemsOpDag(vandaag(), alleItems(false))
-    .filter(item => item.soort === "afspraak" || item.soort === "vrij" || (item.soort === "toets" && item.bron === "google"));
-
-  if (vandaagItems.length === 0) {
-    lijst.innerHTML = '<p class="leeg">Niks in je agenda vandaag.</p>';
-    return;
-  }
-
-  const nu = tijdTekst(new Date());
-  let straksGemarkeerd = false;
-  for (const afspraak of vandaagItems) {
-    const li = maakRegelVoor(afspraak);
-    if (heeftTijd(afspraak)) {
-      const voorbij = (afspraak.eindtijd || afspraak.begintijd) <= nu;
-      const bezig = afspraak.begintijd <= nu && !voorbij;
-      if (voorbij) li.classList.add("voorbij");
-      if (bezig) li.classList.add("nu-bezig");
-      if (!voorbij && !bezig && !straksGemarkeerd) {
-        li.classList.add("straks");
-        straksGemarkeerd = true;
-      }
-    }
-    lijst.appendChild(li);
-  }
+// 📅 Het rooster van vandaag en de 6 dagen erna: school, Google Agenda en je eigen afspraken.
+// Taken staan rechts in de to-do, dus die laten we hier weg (dat houdt het rooster rustig).
+function toonHomeRooster() {
+  const vak = document.getElementById("home-rooster");
+  vak.innerHTML = "";
+  const datums = [0, 1, 2, 3, 4, 5, 6].map(i => plusDagen(vandaag(), i));
+  const agenda = alleItems(false).filter(item =>
+    ["afspraak", "vrij", "optie"].includes(item.soort) || (item.soort === "toets" && item.begintijd));
+  vak.appendChild(maakWeekRooster(datums, agenda)); // staat in weergaven.js
 }
 
 // Belangrijk zonder deadline: de taken met een vlammetje

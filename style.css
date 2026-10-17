@@ -1879,6 +1879,9 @@ dialog {
 dialog h3 { color: var(--tekst) !important; font-size: 18px; }
 dialog::backdrop { background-color: rgba(17, 24, 39, 0.4) !important; }
 
+/* Op een groot scherm mag de pagina breder, zodat je rooster ruimte heeft */
+#inhoud { max-width: 1440px; }
+
 /* ----- Dashboard (Home) ----- */
 .dashboard-raster {
   display: grid;

@@ -78,45 +78,48 @@
       <section id="pagina-home" class="pagina">
         <div id="dash-samenvatting" class="samenvatting"></div>
 
-        <div class="dashboard-raster">
-          <div class="kaart">
+        <div class="home-layout">
+          <!-- Links: je rooster -->
+          <div class="kaart home-agenda">
             <div class="kaart-kop">
-              <h2 id="dash-vandaag-titel">Vandaag</h2>
-              <button class="link-knop" data-ga-naar="todo">To-do →</button>
+              <h2>Rooster · komende 7 dagen</h2>
+              <button class="link-knop" data-ga-naar="agenda">Hele agenda →</button>
             </div>
-            <ul id="dash-vandaag" class="compact"></ul>
+            <div id="home-rooster"></div>
           </div>
 
-          <div class="kaart">
-            <div class="kaart-kop">
-              <h2 id="dash-morgen-titel">Morgen</h2>
-              <button class="link-knop" data-ga-naar="todo">To-do →</button>
+          <!-- Rechts: je to-do -->
+          <div class="home-todo">
+            <div class="kaart">
+              <div class="kaart-kop">
+                <h2 id="dash-vandaag-titel">Vandaag</h2>
+                <button class="link-knop" data-ga-naar="todo">To-do →</button>
+              </div>
+              <ul id="dash-vandaag" class="compact"></ul>
             </div>
-            <ul id="dash-morgen" class="compact"></ul>
-          </div>
 
-          <div class="kaart">
-            <div class="kaart-kop">
-              <h2>Vandaag in je agenda</h2>
-              <button class="link-knop" data-ga-naar="agenda">Agenda →</button>
+            <div class="kaart">
+              <div class="kaart-kop">
+                <h2 id="dash-morgen-titel">Morgen</h2>
+              </div>
+              <ul id="dash-morgen" class="compact"></ul>
             </div>
-            <ul id="dash-agenda" class="compact"></ul>
-          </div>
 
-          <div class="kaart">
-            <div class="kaart-kop">
-              <h2>Belangrijk, zonder deadline</h2>
-              <button class="link-knop" data-ga-naar="todo">Alles →</button>
+            <div class="kaart">
+              <div class="kaart-kop">
+                <h2>Belangrijk, zonder deadline</h2>
+                <button class="link-knop" data-ga-naar="todo">Alles →</button>
+              </div>
+              <ul id="dash-belangrijk" class="compact"></ul>
             </div>
-            <ul id="dash-belangrijk" class="compact"></ul>
-          </div>
 
-          <div class="kaart">
-            <div class="kaart-kop">
-              <h2>Kan vandaag</h2>
-              <span class="info">hoeft niet, mag wel</span>
+            <div class="kaart">
+              <div class="kaart-kop">
+                <h2>Kan vandaag</h2>
+                <span class="info">hoeft niet, mag wel</span>
+              </div>
+              <ul id="lijst-optie" class="compact"></ul>
             </div>
-            <ul id="lijst-optie" class="compact"></ul>
           </div>
         </div>
       </section>
