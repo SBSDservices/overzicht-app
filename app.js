@@ -22,8 +22,14 @@ let leerplannen = laadJson("leerplannen", []);
 let googleAfspraken = [];
 
 // Wat je aan het bekijken bent
-const PAGINAS = { home: "Home", todo: "To-do", taken: "Takenlijst", studie: "Studie", agenda: "Agenda", ideeen: "Ideeën" };
-let pagina = PAGINAS[location.hash.slice(1)] ? location.hash.slice(1) : "home"; // bijv. #agenda
+const PAGINAS = { home: "Home", todo: "To-do", studie: "Studie", agenda: "Agenda", ideeen: "Ideeën" };
+let pagina = paginaUitAdres(); // bijv. #agenda
+
+function paginaUitAdres() {
+  const naam = location.hash.slice(1);
+  if (naam === "taken") return "todo"; // de oude pagina Taken zit nu in To-do
+  return PAGINAS[naam] ? naam : "home";
+}
 let weergave = laadInstelling("weergave", "week");   // in de agenda: week, maand of jaar
 if (!["week", "maand", "jaar"].includes(weergave)) weergave = "week";
 let stijl = laadInstelling("stijl", "rooster");      // rooster of lijst
@@ -620,14 +626,6 @@ function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
   }
   blok.appendChild(kop);
 
-  // Wat staat er die dag al in je agenda? (lessen, werk, tentamens) — elk op een eigen regel
-  const agenda = datum ? dagSamenvatting(datum, "\n") : "";
-  if (agenda) {
-    const regel = document.createElement("p");
-    regel.className = "dag-agenda";
-    regel.textContent = agenda;
-    blok.appendChild(regel);
-  }
 
   taken.sort((a, b) =>
     (a.klaar - b.klaar) ||
@@ -690,7 +688,7 @@ function toonTakenlijst() {
   }
 
   if (taken.length === 0) {
-    lijst.innerHTML = '<p class="leeg">Leeg. Kies bovenin "✅ Taak" zonder datum om iets toe te voegen.</p>';
+    lijst.innerHTML = '<p class="leeg">Niks zonder deadline. Typ hierboven iets zonder datum in.</p>';
   }
 }
 
@@ -748,8 +746,10 @@ function toonAlles() {
   document.getElementById("stijl-knoppen").classList.toggle("verborgen", weergave === "jaar");
 
   if (pagina === "home") toonHome();         // staat in home.js
-  if (pagina === "todo") toonTeDoen();
-  if (pagina === "taken") toonTaken();
+  if (pagina === "todo") {
+    toonTeDoen();
+    toonTaken(); // geen deadline + doelen
+  }
   if (pagina === "studie") toonStudie();     // staat in leerplan.js
   if (pagina === "ideeen") toonIdeeen();     // staat in ideeen.js
   if (pagina === "agenda") {
@@ -792,7 +792,7 @@ function openToevoegen(datum) {
   }
 
   // Kies alvast de soort die past bij de pagina waar je bent
-  const standaard = { todo: "deadline", taken: "taak", agenda: "afspraak", home: "taak" };
+  const standaard = { todo: "taak", agenda: "afspraak", home: "taak" };
   if (opDag) document.getElementById("soort").value = "taak";
   else if (standaard[pagina]) document.getElementById("soort").value = standaard[pagina];
   document.getElementById("herhaal").value = "";
@@ -833,6 +833,26 @@ function openMaand(datum) {
 }
 
 // ===== 7. ACTIES =====
+// De invulbalk bovenaan de To-do: snel een taak toevoegen (met of zonder datum)
+function voegTodoToe(event) {
+  event.preventDefault();
+  const titel = document.getElementById("todo-titel").value.trim();
+  if (!titel) return;
+  items.push({
+    id: Date.now(),
+    soort: "taak",
+    titel: titel,
+    datum: document.getElementById("todo-datum").value, // leeg = geen deadline
+    prioriteit: "normaal",
+    klaar: false
+  });
+  bewaarItems();
+  toonAlles();
+  document.getElementById("todo-titel").value = "";
+  document.getElementById("todo-datum").value = ""; // volgende keer weer standaard zonder datum
+  document.getElementById("todo-titel").focus();
+}
+
 function voegToe(event) {
   event.preventDefault(); // zorgt dat de pagina niet herlaadt
 
@@ -943,6 +963,7 @@ function zoek() {
 
 // ===== 8. STARTEN =====
 document.getElementById("formulier").addEventListener("submit", voegToe);
+document.getElementById("todo-formulier").addEventListener("submit", voegTodoToe);
 document.getElementById("soort").addEventListener("change", pasVeldenAan);
 document.getElementById("herhaal").addEventListener("change", pasVeldenAan);
 document.getElementById("zoek").addEventListener("input", zoek);
@@ -961,7 +982,7 @@ window.addEventListener("resize", () => {
 });
 // De terug-knop van je browser of telefoon
 window.addEventListener("popstate", () => {
-  pagina = PAGINAS[location.hash.slice(1)] ? location.hash.slice(1) : "home";
+  pagina = paginaUitAdres();
   toonAlles();
 });
 document.getElementById("vorige").addEventListener("click", () => blader(-1));

@@ -1879,6 +1879,65 @@ dialog {
 dialog h3 { color: var(--tekst) !important; font-size: 18px; }
 dialog::backdrop { background-color: rgba(17, 24, 39, 0.4) !important; }
 
+/* ----- Dashboard (Home) ----- */
+.dashboard-raster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.te-laat-label {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--rood);
+  background-color: var(--rood-zacht);
+  border-radius: 5px;
+  padding: 0 6px;
+  margin-right: 6px;
+}
+
+li.is-te-laat { border-left-color: var(--rood) !important; background-color: var(--kaart) !important; }
+
+/* In "Vandaag" en "Morgen" staat de dag al in de kop (behalve bij wat te laat is) */
+#dash-vandaag li:not(.is-te-laat) .datum-info,
+#dash-morgen .datum-info { display: none; }
+.teller.rood strong { color: var(--rood); }
+
+/* ----- To-do: invulbalk, links 'geen deadline', rechts de dagen ----- */
+.todo-invoer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  margin: 16px 0 6px;
+}
+
+#todo-titel { flex: 1 1 260px; min-width: 0; }
+.todo-uitleg { margin: 0 0 14px; font-size: 13px; }
+
+.todo-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.todo-dagen { min-width: 0; }
+
+@media (min-width: 1000px) {
+  .todo-layout { grid-template-columns: 300px minmax(0, 1fr); }
+}
+
+/* Op de telefoon eerst de dagen, dan 'geen deadline' */
+@media (max-width: 999px) {
+  .todo-dagen { order: -1; }
+}
+
+.geen-deadline .info { font-size: 13px; margin: -4px 0 10px; }
+.geen-deadline ul li { padding: 8px 10px; }
+
 /* ===== Telefoon ===== */
 @media (max-width: 600px) {
   body { margin-top: 0; }

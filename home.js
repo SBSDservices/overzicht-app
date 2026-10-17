@@ -1,12 +1,65 @@
-// ===== HOME: JE HOOFDPAGINA =====
-// Links je agenda van deze week (schoolrooster + Google Agenda), rechts je to-do.
+// ===== HOME: HET DASHBOARD =====
+// In één oogopslag: wat moet er vandaag en morgen af, wat staat er vandaag in je agenda.
 
 function toonHome() {
-  const todo = toonHomeTodo();
+  const open = takenMetDatum();
+  const teLaat = open.filter(item => groepVoor(item) === "te-laat" && !item.klaar);
+  const vandaagLijst = open.filter(item => item.datum === vandaag());
+  const morgenLijst = open.filter(item => item.datum === plusDagen(vandaag(), 1));
+
+  toonDashLijst("dash-vandaag", teLaat.concat(vandaagLijst), "Niks meer voor vandaag 🎉", teLaat);
+  toonDashLijst("dash-morgen", morgenLijst, "Niks voor morgen.");
+  document.getElementById("dash-vandaag-titel").textContent = "Vandaag · " + mooieDatum(vandaag());
+  document.getElementById("dash-morgen-titel").textContent = "Morgen · " + mooieDatum(plusDagen(vandaag(), 1));
+
+  toonDashAgenda();
   const belangrijk = toonDashBelangrijk();
   toonOpties(alleItems(false)); // staat in app.js
-  toonHomeRooster();
-  toonSamenvatting(todo, belangrijk);
+  // Geen sport of andere opties vandaag? Dan het kaartje helemaal weglaten
+  const opties = document.getElementById("lijst-optie");
+  opties.closest(".kaart").classList.toggle("verborgen", !opties.querySelector("li"));
+
+  toonSamenvatting({
+    vandaag: vandaagLijst.filter(item => !item.klaar).length,
+    teLaat: teLaat.length,
+    morgen: morgenLijst.filter(item => !item.klaar).length
+  }, belangrijk);
+}
+
+// Alle taken met een datum (herhalende taken: de keren in de komende 7 dagen)
+function takenMetDatum() {
+  const lijst = [];
+  for (const item of items) {
+    if (!["taak", "deadline", "huiswerk", "toets"].includes(item.soort) || !item.datum) continue;
+    if (item.herhaal) {
+      for (let i = 0; i < 7; i++) {
+        const datum = plusDagen(vandaag(), i);
+        if (valtOp(item, datum)) lijst.push(herhaling(item, datum));
+      }
+    } else {
+      lijst.push(item);
+    }
+  }
+  return lijst;
+}
+
+// Een lijstje met taken; wat te laat is krijgt een rood labeltje
+function toonDashLijst(id, taken, leegTekst, teLaat = []) {
+  const lijst = document.getElementById(id);
+  lijst.innerHTML = "";
+  taken.sort((a, b) => (a.klaar - b.klaar) || (a.datum || "").localeCompare(b.datum || ""));
+  for (const item of taken) {
+    const li = maakRegel(item);
+    if (teLaat.includes(item)) {
+      li.classList.add("is-te-laat");
+      const label = document.createElement("span");
+      label.className = "te-laat-label";
+      label.textContent = "te laat";
+      li.querySelector(".tekst").prepend(label);
+    }
+    lijst.appendChild(li);
+  }
+  if (taken.length === 0) lijst.innerHTML = '<p class="leeg">' + leegTekst + "</p>";
 }
 
 // Een groet die past bij het moment van de dag
@@ -18,7 +71,7 @@ function groet() {
   return "Goedenavond";
 }
 
-function toonSamenvatting(todo, belangrijk) {
+function toonSamenvatting(aantallen, belangrijk) {
   const vak = document.getElementById("dash-samenvatting");
   vak.innerHTML = "";
 
@@ -28,9 +81,10 @@ function toonSamenvatting(todo, belangrijk) {
 
   const toetsen = komendeTentamens().filter(item => dagenTot(item.datum) <= 14).length; // staat in leerplan.js
   const blokjes = [
-    { getal: todo.vandaag, tekst: "vandaag te doen", pagina: "todo" },
-    { getal: todo.teLaat, tekst: "te laat", pagina: "todo" },
-    { getal: belangrijk, tekst: "belangrijke taken", pagina: "taken" },
+    { getal: aantallen.vandaag, tekst: "vandaag te doen", pagina: "todo" },
+    { getal: aantallen.teLaat, tekst: "te laat", pagina: "todo", rood: true },
+    { getal: aantallen.morgen, tekst: "morgen te doen", pagina: "todo" },
+    { getal: belangrijk, tekst: "belangrijk zonder deadline", pagina: "todo" },
     { getal: toetsen, tekst: toetsen === 1 ? "toets in 2 weken" : "toetsen in 2 weken", pagina: "studie" }
   ];
 
@@ -42,7 +96,7 @@ function toonSamenvatting(todo, belangrijk) {
   rij.className = "teller-rij";
   for (const blokje of tonen) {
     const teller = document.createElement("button");
-    teller.className = "teller";
+    teller.className = "teller" + (blokje.rood ? " rood" : "");
     teller.onclick = () => kiesPagina(blokje.pagina);
     teller.innerHTML = "<strong></strong><span></span>";
     teller.querySelector("strong").textContent = blokje.getal;
@@ -52,49 +106,38 @@ function toonSamenvatting(todo, belangrijk) {
   vak.appendChild(rij);
 }
 
-// 📅 Het rooster van vandaag en de 6 dagen erna, met alles erin (school, Google Agenda, je eigen afspraken)
-function toonHomeRooster() {
-  const vak = document.getElementById("home-rooster");
-  vak.innerHTML = "";
-  const datums = [0, 1, 2, 3, 4, 5, 6].map(i => plusDagen(vandaag(), i));
-  vak.appendChild(maakWeekRooster(datums, alleItems(false))); // staat in weergaven.js
-}
+// Wat er vandaag in je agenda staat: lessen, afspraken, vakantie, toetsen
+function toonDashAgenda() {
+  const lijst = document.getElementById("dash-agenda");
+  lijst.innerHTML = "";
 
-// ✅ Wat je moet doen: te laat, vandaag, morgen en de rest van de week
-function toonHomeTodo() {
-  const vak = document.getElementById("home-todo");
-  vak.innerHTML = "";
+  const vandaagItems = itemsOpDag(vandaag(), alleItems(false))
+    .filter(item => item.soort === "afspraak" || item.soort === "vrij" || (item.soort === "toets" && item.bron === "google"));
 
-  const open = [];
-  for (const item of items) {
-    if (!["taak", "deadline", "huiswerk", "toets"].includes(item.soort) || !item.datum) continue;
-    if (item.herhaal) {
-      for (let i = 0; i < 7; i++) {
-        const datum = plusDagen(vandaag(), i);
-        if (valtOp(item, datum)) open.push(herhaling(item, datum));
+  if (vandaagItems.length === 0) {
+    lijst.innerHTML = '<p class="leeg">Niks in je agenda vandaag.</p>';
+    return;
+  }
+
+  const nu = tijdTekst(new Date());
+  let straksGemarkeerd = false;
+  for (const afspraak of vandaagItems) {
+    const li = maakRegelVoor(afspraak);
+    if (heeftTijd(afspraak)) {
+      const voorbij = (afspraak.eindtijd || afspraak.begintijd) <= nu;
+      const bezig = afspraak.begintijd <= nu && !voorbij;
+      if (voorbij) li.classList.add("voorbij");
+      if (bezig) li.classList.add("nu-bezig");
+      if (!voorbij && !bezig && !straksGemarkeerd) {
+        li.classList.add("straks");
+        straksGemarkeerd = true;
       }
-    } else {
-      open.push(item);
     }
+    lijst.appendChild(li);
   }
-
-  const teLaat = open.filter(item => groepVoor(item) === "te-laat");
-  if (teLaat.length) vak.appendChild(maakDagBlok("Te laat", teLaat, null)); // staat in app.js
-
-  // Vandaag en morgen altijd, de dagen daarna alleen als er iets staat
-  let aantalVandaag = 0;
-  for (let i = 0; i < 7; i++) {
-    const datum = plusDagen(vandaag(), i);
-    const taken = open.filter(item => item.datum === datum && groepVoor(item));
-    if (i === 0) aantalVandaag = taken.filter(item => !item.klaar).length;
-    if (taken.length === 0 && i > 1) continue;
-    vak.appendChild(maakDagBlok(dagKop(datum), taken, datum, true));
-  }
-
-  return { teLaat: teLaat.filter(item => !item.klaar).length, vandaag: aantalVandaag };
 }
 
-// 🔥 Belangrijk: de taken uit je takenlijst met een vlammetje
+// Belangrijk zonder deadline: de taken met een vlammetje
 function toonDashBelangrijk() {
   const lijst = document.getElementById("dash-belangrijk");
   lijst.innerHTML = "";
@@ -104,9 +147,9 @@ function toonDashBelangrijk() {
 
   for (const item of belangrijk.slice(0, 5)) lijst.appendChild(maakRegel(item));
   if (belangrijk.length > 5) lijst.insertAdjacentHTML("beforeend",
-    '<p class="info">+' + (belangrijk.length - 5) + " meer in je takenlijst</p>");
+    '<p class="info">+' + (belangrijk.length - 5) + " meer in je To-do</p>");
   if (belangrijk.length === 0) {
-    lijst.innerHTML = '<p class="leeg">Geen belangrijke taken. Klik in je takenlijst op ☆ om iets belangrijk te maken.</p>';
+    lijst.innerHTML = '<p class="leeg">Niks belangrijks zonder deadline. In je To-do maak je iets belangrijk met ☆.</p>';
   }
   return belangrijk.length;
 }

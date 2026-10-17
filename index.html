@@ -37,10 +37,6 @@
       <svg class="menu-icoon" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8 12 3 3 5-6"/></svg>
       <span>To-do</span>
     </button>
-    <button data-pagina="taken">
-      <svg class="menu-icoon" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>
-      <span>Taken</span>
-    </button>
     <button data-pagina="studie">
       <svg class="menu-icoon" viewBox="0 0 24 24"><path d="M2.5 5h6a3.5 3.5 0 0 1 3.5 3.5V20a2.5 2.5 0 0 0-2.5-2.5h-7z"/><path d="M21.5 5h-6A3.5 3.5 0 0 0 12 8.5V20a2.5 2.5 0 0 1 2.5-2.5h7z"/></svg>
       <span>Studie</span>
@@ -78,63 +74,82 @@
     </div>
 
     <main>
-      <!-- ===== HOME: je agenda en je to-do ===== -->
+      <!-- ===== HOME: het dashboard — wat moet er vandaag en morgen gebeuren? ===== -->
       <section id="pagina-home" class="pagina">
         <div id="dash-samenvatting" class="samenvatting"></div>
 
-        <div class="home-layout">
-          <div class="kaart home-agenda">
+        <div class="dashboard-raster">
+          <div class="kaart">
             <div class="kaart-kop">
-              <h2>Komende 7 dagen</h2>
-              <button class="link-knop" data-ga-naar="agenda">Hele agenda →</button>
+              <h2 id="dash-vandaag-titel">Vandaag</h2>
+              <button class="link-knop" data-ga-naar="todo">To-do →</button>
             </div>
-            <div id="home-rooster"></div>
+            <ul id="dash-vandaag" class="compact"></ul>
           </div>
 
-          <div class="home-todo">
-            <div class="kaart">
-              <div class="kaart-kop">
-                <h2>To-do</h2>
-                <button class="link-knop" data-ga-naar="todo">Alles →</button>
-              </div>
-              <div id="home-todo"></div>
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2 id="dash-morgen-titel">Morgen</h2>
+              <button class="link-knop" data-ga-naar="todo">To-do →</button>
             </div>
+            <ul id="dash-morgen" class="compact"></ul>
+          </div>
 
-            <div class="kaart">
-              <div class="kaart-kop">
-                <h2>Belangrijk</h2>
-                <button class="link-knop" data-ga-naar="taken">Takenlijst →</button>
-              </div>
-              <ul id="dash-belangrijk" class="compact"></ul>
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2>Vandaag in je agenda</h2>
+              <button class="link-knop" data-ga-naar="agenda">Agenda →</button>
             </div>
+            <ul id="dash-agenda" class="compact"></ul>
+          </div>
 
-            <div class="kaart">
-              <div class="kaart-kop">
-                <h2>Kan vandaag</h2>
-                <span class="info">hoeft niet, mag wel</span>
-              </div>
-              <ul id="lijst-optie" class="compact"></ul>
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2>Belangrijk, zonder deadline</h2>
+              <button class="link-knop" data-ga-naar="todo">Alles →</button>
             </div>
+            <ul id="dash-belangrijk" class="compact"></ul>
+          </div>
+
+          <div class="kaart">
+            <div class="kaart-kop">
+              <h2>Kan vandaag</h2>
+              <span class="info">hoeft niet, mag wel</span>
+            </div>
+            <ul id="lijst-optie" class="compact"></ul>
           </div>
         </div>
       </section>
 
-      <!-- ===== TO-DO: alles met een datum ===== -->
+      <!-- ===== TO-DO: alles wat je moet doen, met en zonder datum ===== -->
       <section id="pagina-todo" class="pagina">
-        <p class="info pagina-uitleg">Per dag wat je moet doen. Scroll of veeg opzij voor de volgende dagen.</p>
+        <!-- Snel iets toevoegen -->
+        <form id="todo-formulier" class="todo-invoer">
+          <input id="todo-titel" placeholder="Wat moet je doen? Bijv. 'Orthodontist zoeken'" required>
+          <input id="todo-datum" type="date" aria-label="Datum (mag leeg)" title="Datum (mag leeg: dan komt het bij 'Geen deadline')">
+          <button type="submit" class="hoofdknop">Toevoegen</button>
+        </form>
+        <p class="info todo-uitleg">Zonder datum komt het bij <strong>Geen deadline</strong>. Met een datum komt het op die dag.</p>
         <p id="todo-melding" class="alles-af verborgen"></p>
-        <div id="lijst-te-doen" class="dagen-kolommen"></div>
-      </section>
 
-      <!-- ===== TAKEN: zonder deadline, plus doelen ===== -->
-      <section id="pagina-taken" class="pagina smal">
-        <p class="info pagina-uitleg">Dingen zonder deadline die wel moeten gebeuren. Klik op 🔥 / ☆ / 💤 om te kiezen hoe belangrijk.</p>
-        <ul id="lijst-takenlijst"></ul>
+        <div class="todo-layout">
+          <!-- Links: dingen zonder deadline -->
+          <div class="kaart geen-deadline">
+            <div class="kaart-kop">
+              <h2>Geen deadline</h2>
+            </div>
+            <p class="info">Waar je je nog in wilt verdiepen of naar moet kijken. Klik op 🔥 / ☆ / 💤 om te kiezen hoe belangrijk.</p>
+            <ul id="lijst-takenlijst"></ul>
 
-        <div class="sectie-kop">
-          <h2>Doelen</h2>
+            <h3 class="groep-kop">Doelen</h3>
+            <ul id="lijst-doel" class="compact"></ul>
+          </div>
+
+          <!-- Rechts: per dag -->
+          <div class="todo-dagen">
+            <div id="lijst-te-doen" class="dagen-kolommen"></div>
+          </div>
         </div>
-        <ul id="lijst-doel"></ul>
       </section>
 
       <!-- ===== STUDIE: alles voor school ===== -->
