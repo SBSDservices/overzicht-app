@@ -1291,8 +1291,24 @@ li.plan-taak.zonder-dag input[type="date"] { border-color: #fd7e14; background-c
 .plan-tabel th {
   font-weight: normal;
   color: #666;
-  min-width: 34px;
+  min-width: 110px;
+  vertical-align: bottom;
 }
+
+/* De rij "Al gepland": wat er die dag al staat, klein en grijs */
+.plan-tabel .al-gepland td {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #666;
+  white-space: pre-line;
+  text-align: left;
+  vertical-align: top;
+  padding: 6px;
+  max-width: 130px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.plan-tabel .al-gepland td.taak-kolom { font-size: 12px; vertical-align: middle; }
 
 .plan-tabel th span, .plan-tabel th strong { display: block; }
 .plan-tabel th strong { color: #222; font-size: 14px; }
