@@ -1879,6 +1879,26 @@ dialog {
 dialog h3 { color: var(--tekst) !important; font-size: 18px; }
 dialog::backdrop { background-color: rgba(17, 24, 39, 0.4) !important; }
 
+/* De foutmelding onderaan het scherm */
+.fout-melding {
+  position: fixed;
+  left: 50%;
+  bottom: 90px;
+  transform: translateX(-50%);
+  z-index: 100;
+  background-color: var(--tekst);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.fout-melding button { background-color: white; color: var(--tekst); border: none; padding: 6px 10px; cursor: pointer; }
+
 /* Op een groot scherm mag de pagina breder, zodat je rooster ruimte heeft */
 #inhoud { max-width: 1440px; }
 
