@@ -31,7 +31,7 @@ function paginaUitAdres() {
   return PAGINAS[naam] ? naam : "home";
 }
 let weergave = laadInstelling("weergave", "week");   // in de agenda: week, maand of jaar
-if (!["week", "maand", "jaar"].includes(weergave)) weergave = "week";
+if (!["dag", "week", "maand", "jaar"].includes(weergave)) weergave = "week";
 let stijl = laadInstelling("stijl", "rooster");      // rooster of lijst
 let focusDatum = vandaag();                          // welke week/maand/jaar
 let zoekterm = "";
@@ -663,8 +663,9 @@ function dagSamenvatting(datum, scheiding = " · ") {
 }
 
 // ===== TAKENLIJST: dingen zonder datum, op volgorde van hoe belangrijk =====
-function toonTakenlijst() {
-  const lijst = document.getElementById("lijst-takenlijst");
+// lijstId: waar de lijst komt (in de To-do, of op Home). Geeft terug hoeveel er nog open staan.
+function toonTakenlijst(lijstId = "lijst-takenlijst") {
+  const lijst = document.getElementById(lijstId);
   lijst.innerHTML = "";
 
   // Afgevinkte taken laten we nog 2 dagen zien, daarna verdwijnen ze
@@ -690,6 +691,7 @@ function toonTakenlijst() {
   if (taken.length === 0) {
     lijst.innerHTML = '<p class="leeg">Niks zonder deadline. Typ hierboven iets zonder datum in.</p>';
   }
+  return taken.filter(item => !item.klaar).length;
 }
 
 // In welke groep hoort een item? (null = niet laten zien)
@@ -753,9 +755,18 @@ function toonAlles() {
   if (pagina === "studie") toonStudie();     // staat in leerplan.js
   if (pagina === "ideeen") toonIdeeen();     // staat in ideeen.js
   if (pagina === "agenda") {
-    if (weergave === "week") toonWeek();     // staat in weergaven.js
-    if (weergave === "maand") toonMaand();
-    if (weergave === "jaar") toonJaar();
+    maakAgendaFilter(document.getElementById("agenda-filter"));
+    tekenAgenda({ // staat in weergaven.js
+      vak: document.getElementById("weergave-overig"),
+      titel: document.getElementById("periode-titel"),
+      weergave: weergave,
+      focus: focusDatum,
+      stijl: stijl,
+      items: alleItems().filter(zichtbaarInAgenda),
+      openDag: openDag,
+      openWeek: openWeek,
+      openMaand: openMaand
+    });
   }
 
   vernieuwLesVenster();  // staat in lessen.js
@@ -810,6 +821,7 @@ function kiesStijl(nieuw) {
 
 // Een stap terug (-1) of vooruit (+1) in de tijd
 function blader(richting) {
+  if (weergave === "dag") focusDatum = plusDagen(focusDatum, richting);
   if (weergave === "week") focusDatum = plusDagen(focusDatum, 7 * richting);
   if (weergave === "maand") focusDatum = plusMaanden(focusDatum, richting);
   if (weergave === "jaar") focusDatum = plusMaanden(focusDatum, 12 * richting);
@@ -825,6 +837,79 @@ function naarVandaag() {
 function openWeek(datum) {
   focusDatum = datum;
   kiesWeergave("week");
+}
+
+function openDag(datum) {
+  focusDatum = datum;
+  kiesWeergave("dag");
+}
+
+// ===== FILTER: welke agenda's wil je zien? =====
+// Elk item hoort bij een "groep": een van je Google-agenda's, je eigen afspraken, of je taken.
+let verborgenAgendas = laadJson("verborgenAgendas", []);
+let filterOpen = false; // staat het filtermenu open?
+
+function agendaGroep(item) {
+  if (item.bron === "google") return item.agendaNaam || "Google Agenda";
+  if (["afspraak", "optie", "vrij"].includes(item.soort)) return "Eigen afspraken & sport";
+  return "Taken, huiswerk & deadlines";
+}
+
+function zichtbaarInAgenda(item) {
+  return !verborgenAgendas.includes(agendaGroep(item));
+}
+
+// Het knopje "Filter" met een lijstje om agenda's aan of uit te zetten
+function maakAgendaFilter(vak) {
+  vak.innerHTML = "";
+  const groepen = [...new Set(googleAfspraken.map(agendaGroep))].sort();
+  groepen.push("Eigen afspraken & sport", "Taken, huiswerk & deadlines");
+
+  const menu = document.createElement("details");
+  menu.className = "filter-menu";
+  menu.open = filterOpen;
+  menu.ontoggle = () => { filterOpen = menu.open; };
+
+  const knop = document.createElement("summary");
+  knop.onclick = () => { filterOpen = !menu.open; }; // onthouden, zodat het open blijft als de agenda opnieuw getekend wordt
+  const aantalUit = groepen.filter(groep => verborgenAgendas.includes(groep)).length;
+  knop.textContent = "Filter" + (aantalUit ? " · " + aantalUit + " verborgen" : "");
+  menu.appendChild(knop);
+
+  const lijst = div("filter-lijst");
+  for (const groep of groepen) {
+    const regel = document.createElement("label");
+    const vinkje = document.createElement("input");
+    vinkje.type = "checkbox";
+    vinkje.checked = !verborgenAgendas.includes(groep);
+    vinkje.onchange = () => {
+      filterOpen = true;
+      verborgenAgendas = vinkje.checked
+        ? verborgenAgendas.filter(naam => naam !== groep)
+        : verborgenAgendas.concat(groep);
+      bewaarInstelling("verborgenAgendas", JSON.stringify(verborgenAgendas));
+      toonAlles();
+    };
+    regel.append(vinkje, document.createTextNode(" " + groep));
+    lijst.appendChild(regel);
+  }
+
+  // Alle uren van de dag, of alleen de uren waarin je iets hebt
+  const scheiding = document.createElement("hr");
+  const uren = document.createElement("label");
+  const urenVinkje = document.createElement("input");
+  urenVinkje.type = "checkbox";
+  urenVinkje.checked = laadInstelling("alleenEigenUren", "nee") === "ja";
+  urenVinkje.onchange = () => {
+    filterOpen = true;
+    bewaarInstelling("alleenEigenUren", urenVinkje.checked ? "ja" : "nee");
+    toonAlles();
+  };
+  uren.append(urenVinkje, document.createTextNode(" Alleen uren met afspraken"));
+  lijst.append(scheiding, uren);
+
+  menu.appendChild(lijst);
+  vak.appendChild(menu);
 }
 
 function openMaand(datum) {

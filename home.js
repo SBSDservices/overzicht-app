@@ -1,29 +1,84 @@
 // ===== HOME: HET DASHBOARD =====
-// Links je rooster van de komende 7 dagen, rechts wat er vandaag en morgen af moet.
+// Links je agenda (dag, week, maand of jaar), rechts wat je moet doen.
+
+// Wat je op Home bekijkt (los van de pagina Agenda)
+let homeWeergave = null; // "dag", "week", "maand" of "jaar"
+let homeFocus = null;    // welke dag/week/maand
 
 function toonHome() {
+  if (!homeWeergave) homeWeergave = laadInstelling("homeWeergave", "week");
+  if (!homeFocus) homeFocus = vandaag();
+
   const open = takenMetDatum();
   const teLaat = open.filter(item => groepVoor(item) === "te-laat" && !item.klaar);
   const vandaagLijst = open.filter(item => item.datum === vandaag());
   const morgenLijst = open.filter(item => item.datum === plusDagen(vandaag(), 1));
 
-  toonDashLijst("dash-vandaag", teLaat.concat(vandaagLijst), "Niks meer voor vandaag 🎉", teLaat);
-  toonDashLijst("dash-morgen", morgenLijst, "Niks voor morgen.");
+  // Kaarten zonder iets erin laten we weg
+  const vandaagTaken = teLaat.concat(vandaagLijst);
+  toonDashLijst("dash-vandaag", vandaagTaken, teLaat);
+  toonDashLijst("dash-morgen", morgenLijst);
+  document.getElementById("kaart-vandaag").classList.toggle("verborgen", vandaagTaken.length === 0);
+  document.getElementById("kaart-morgen").classList.toggle("verborgen", morgenLijst.length === 0);
   document.getElementById("dash-vandaag-titel").textContent = "Vandaag · " + mooieDatum(vandaag());
   document.getElementById("dash-morgen-titel").textContent = "Morgen · " + mooieDatum(plusDagen(vandaag(), 1));
 
-  toonHomeRooster();
-  const belangrijk = toonDashBelangrijk();
+  // Alles zonder deadline (zelfde lijst als in de To-do)
+  const geenDeadline = toonTakenlijst("dash-geen-deadline"); // staat in app.js
+  document.getElementById("kaart-geen-deadline").classList.toggle("verborgen", geenDeadline === 0);
+
   toonOpties(alleItems(false)); // staat in app.js
-  // Geen sport of andere opties vandaag? Dan het kaartje helemaal weglaten
   const opties = document.getElementById("lijst-optie");
   opties.closest(".kaart").classList.toggle("verborgen", !opties.querySelector("li"));
 
+  // Helemaal niks te doen? Dan een vrolijk berichtje
+  document.getElementById("kaart-alles-af").classList.toggle("verborgen",
+    vandaagTaken.length + morgenLijst.length + geenDeadline > 0);
+
+  toonHomeAgenda();
+
+  const belangrijk = items.filter(item =>
+    item.soort === "taak" && !item.datum && item.prioriteit === "hoog" && !item.klaar).length;
   toonSamenvatting({
     vandaag: vandaagLijst.filter(item => !item.klaar).length,
     teLaat: teLaat.length,
     morgen: morgenLijst.filter(item => !item.klaar).length
   }, belangrijk);
+}
+
+// De agenda op Home: dag, week, maand of jaar, met je filter
+function toonHomeAgenda() {
+  document.querySelectorAll("[data-home-weergave]").forEach(knop =>
+    knop.classList.toggle("actief", knop.dataset.homeWeergave === homeWeergave));
+  maakAgendaFilter(document.getElementById("home-filter")); // staat in app.js
+
+  tekenAgenda({ // staat in weergaven.js
+    vak: document.getElementById("home-rooster"),
+    titel: document.getElementById("home-periode"),
+    weergave: homeWeergave,
+    focus: homeFocus,
+    stijl: "rooster",
+    items: alleItems(false).filter(zichtbaarInAgenda),
+    openDag: datum => kiesHomeWeergave("dag", datum),
+    openWeek: datum => kiesHomeWeergave("week", datum),
+    openMaand: datum => kiesHomeWeergave("maand", datum)
+  });
+}
+
+function kiesHomeWeergave(nieuw, datum) {
+  homeWeergave = nieuw;
+  if (datum) homeFocus = datum;
+  bewaarInstelling("homeWeergave", nieuw);
+  toonAlles();
+}
+
+// ‹ en ›: een dag, week, maand of jaar terug of verder
+function bladerHome(richting) {
+  if (homeWeergave === "dag") homeFocus = plusDagen(homeFocus, richting);
+  if (homeWeergave === "week") homeFocus = plusDagen(homeFocus, 7 * richting);
+  if (homeWeergave === "maand") homeFocus = plusMaanden(homeFocus, richting);
+  if (homeWeergave === "jaar") homeFocus = plusMaanden(homeFocus, 12 * richting);
+  toonAlles();
 }
 
 // Alle taken met een datum (herhalende taken: de keren in de komende 7 dagen)
@@ -44,7 +99,7 @@ function takenMetDatum() {
 }
 
 // Een lijstje met taken; wat te laat is krijgt een rood labeltje
-function toonDashLijst(id, taken, leegTekst, teLaat = []) {
+function toonDashLijst(id, taken, teLaat = []) {
   const lijst = document.getElementById(id);
   lijst.innerHTML = "";
   taken.sort((a, b) => (a.klaar - b.klaar) || (a.datum || "").localeCompare(b.datum || ""));
@@ -59,7 +114,6 @@ function toonDashLijst(id, taken, leegTekst, teLaat = []) {
     }
     lijst.appendChild(li);
   }
-  if (taken.length === 0) lijst.innerHTML = '<p class="leeg">' + leegTekst + "</p>";
 }
 
 // Een groet die past bij het moment van de dag
@@ -106,30 +160,12 @@ function toonSamenvatting(aantallen, belangrijk) {
   vak.appendChild(rij);
 }
 
-// 📅 Het rooster van vandaag en de 6 dagen erna: school, Google Agenda en je eigen afspraken.
-// Taken staan rechts in de to-do, dus die laten we hier weg (dat houdt het rooster rustig).
-function toonHomeRooster() {
-  const vak = document.getElementById("home-rooster");
-  vak.innerHTML = "";
-  const datums = [0, 1, 2, 3, 4, 5, 6].map(i => plusDagen(vandaag(), i));
-  const agenda = alleItems(false).filter(item =>
-    ["afspraak", "vrij", "optie"].includes(item.soort) || (item.soort === "toets" && item.begintijd));
-  vak.appendChild(maakWeekRooster(datums, agenda)); // staat in weergaven.js
-}
-
-// Belangrijk zonder deadline: de taken met een vlammetje
-function toonDashBelangrijk() {
-  const lijst = document.getElementById("dash-belangrijk");
-  lijst.innerHTML = "";
-
-  const belangrijk = items.filter(item =>
-    item.soort === "taak" && !item.datum && item.prioriteit === "hoog" && !item.klaar);
-
-  for (const item of belangrijk.slice(0, 5)) lijst.appendChild(maakRegel(item));
-  if (belangrijk.length > 5) lijst.insertAdjacentHTML("beforeend",
-    '<p class="info">+' + (belangrijk.length - 5) + " meer in je To-do</p>");
-  if (belangrijk.length === 0) {
-    lijst.innerHTML = '<p class="leeg">Niks belangrijks zonder deadline. In je To-do maak je iets belangrijk met ☆.</p>';
-  }
-  return belangrijk.length;
-}
+// ----- Starten -----
+document.querySelectorAll("[data-home-weergave]").forEach(knop =>
+  knop.addEventListener("click", () => kiesHomeWeergave(knop.dataset.homeWeergave)));
+document.getElementById("home-vorige").addEventListener("click", () => bladerHome(-1));
+document.getElementById("home-volgende").addEventListener("click", () => bladerHome(1));
+document.getElementById("home-vandaag").addEventListener("click", () => {
+  homeFocus = vandaag();
+  toonAlles();
+});

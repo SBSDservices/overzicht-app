@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261017c">
+  <link rel="stylesheet" href="style.css?v=20261017e">
 
   <!-- Om de app op je telefoon te installeren -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -81,16 +81,28 @@
         <div class="home-layout">
           <!-- Links: je rooster -->
           <div class="kaart home-agenda">
-            <div class="kaart-kop">
-              <h2>Rooster · komende 7 dagen</h2>
-              <button class="link-knop" data-ga-naar="agenda">Hele agenda →</button>
+            <!-- Knoppen: dag/week/maand/jaar, bladeren, filter -->
+            <div class="agenda-balk">
+              <div class="schakelaar">
+                <button data-home-weergave="dag">Dag</button>
+                <button data-home-weergave="week">Week</button>
+                <button data-home-weergave="maand">Maand</button>
+                <button data-home-weergave="jaar">Jaar</button>
+              </div>
+              <div class="agenda-nav">
+                <button id="home-vorige" title="Vorige">‹</button>
+                <button id="home-volgende" title="Volgende">›</button>
+                <button id="home-vandaag">Vandaag</button>
+              </div>
+              <div id="home-filter"></div>
             </div>
+            <h2 id="home-periode" class="agenda-titel"></h2>
             <div id="home-rooster"></div>
           </div>
 
-          <!-- Rechts: je to-do -->
+          <!-- Rechts: je to-do (kaarten zonder iets erin worden verborgen) -->
           <div class="home-todo">
-            <div class="kaart">
+            <div class="kaart" id="kaart-vandaag">
               <div class="kaart-kop">
                 <h2 id="dash-vandaag-titel">Vandaag</h2>
                 <button class="link-knop" data-ga-naar="todo">To-do →</button>
@@ -98,19 +110,23 @@
               <ul id="dash-vandaag" class="compact"></ul>
             </div>
 
-            <div class="kaart">
+            <div class="kaart" id="kaart-morgen">
               <div class="kaart-kop">
                 <h2 id="dash-morgen-titel">Morgen</h2>
               </div>
               <ul id="dash-morgen" class="compact"></ul>
             </div>
 
-            <div class="kaart">
+            <div class="kaart" id="kaart-geen-deadline">
               <div class="kaart-kop">
-                <h2>Belangrijk, zonder deadline</h2>
-                <button class="link-knop" data-ga-naar="todo">Alles →</button>
+                <h2>Geen deadline</h2>
+                <button class="link-knop" data-ga-naar="todo">To-do →</button>
               </div>
-              <ul id="dash-belangrijk" class="compact"></ul>
+              <ul id="dash-geen-deadline"></ul>
+            </div>
+
+            <div class="kaart verborgen" id="kaart-alles-af">
+              <p class="leeg">Niks te doen vandaag en morgen 🎉</p>
             </div>
 
             <div class="kaart">
@@ -230,6 +246,7 @@
       <section id="pagina-agenda" class="pagina">
         <div id="werkbalk">
           <div class="schakelaar">
+            <button data-weergave="dag">Dag</button>
             <button data-weergave="week">Week</button>
             <button data-weergave="maand">Maand</button>
             <button data-weergave="jaar">Jaar</button>
@@ -244,6 +261,7 @@
             <button data-stijl="rooster">Rooster</button>
             <button data-stijl="lijst">Lijst</button>
           </div>
+          <div id="agenda-filter"></div>
         </div>
         <div id="weergave-overig"></div>
       </section>
@@ -459,13 +477,13 @@
   </script>
 
   <!-- De JavaScript-bestanden (het ?v= erachter is het versienummer, zodat je browser geen oude versie gebruikt) -->
-  <script src="weergaven.js?v=20261017c"></script>
-  <script src="lessen.js?v=20261017c"></script>
-  <script src="ideeen.js?v=20261017c"></script>
-  <script src="home.js?v=20261017c"></script>
-  <script src="leerplan.js?v=20261017c"></script>
-  <script src="app.js?v=20261017c"></script>
-  <script src="google.js?v=20261017c"></script>
+  <script src="weergaven.js?v=20261017e"></script>
+  <script src="lessen.js?v=20261017e"></script>
+  <script src="ideeen.js?v=20261017e"></script>
+  <script src="home.js?v=20261017e"></script>
+  <script src="leerplan.js?v=20261017e"></script>
+  <script src="app.js?v=20261017e"></script>
+  <script src="google.js?v=20261017e"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="startGoogle()"></script>
 </body>
 

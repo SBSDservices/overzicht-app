@@ -47,26 +47,55 @@ function maakChip(item) {
   return chip;
 }
 
+// ===== WAAR TEKENEN WE DE AGENDA? =====
+// De agenda staat op twee plekken: op Home en op de pagina Agenda.
+// Daarom geven we telkens mee wáár en wát we tekenen:
+// { vak, titel, weergave: "dag"|"week"|"maand"|"jaar", focus, stijl, items, openDag, openWeek, openMaand }
+let ctx = null;
+
+function tekenAgenda(instellingen) {
+  ctx = instellingen;
+  if (ctx.weergave === "dag") toonDag();
+  if (ctx.weergave === "week") toonWeek();
+  if (ctx.weergave === "maand") toonMaand();
+  if (ctx.weergave === "jaar") toonJaar();
+}
+
+// ===== DAG =====
+function toonDag() {
+  ctx.titel.textContent = hoofdletter(new Date(ctx.focus).toLocaleDateString("nl-NL",
+    { weekday: "long", day: "numeric", month: "long" })) + (ctx.focus === vandaag() ? " · vandaag" : "");
+  ctx.vak.innerHTML = "";
+
+  if (ctx.stijl === "lijst") {
+    const lijst = document.createElement("ul");
+    vulDagenLijst(lijst, [ctx.focus], ctx.items, { legeDagenTonen: true });
+    ctx.vak.appendChild(lijst);
+  } else {
+    ctx.vak.appendChild(maakWeekRooster([ctx.focus], ctx.items));
+  }
+}
+
 // ===== WEEK =====
 function toonWeek() {
-  const maandag = startVanWeek(focusDatum);
+  const maandag = startVanWeek(ctx.focus);
   const datums = [0, 1, 2, 3, 4, 5, 6].map(i => plusDagen(maandag, i));
 
   const opties = { day: "numeric", month: "short" };
-  document.getElementById("periode-titel").textContent =
+  ctx.titel.textContent =
     "Week " + weekNummer(maandag) + " · " +
     new Date(datums[0]).toLocaleDateString("nl-NL", opties) + " – " +
     new Date(datums[6]).toLocaleDateString("nl-NL", { ...opties, year: "numeric" });
 
-  const vak = document.getElementById("weergave-overig");
+  const vak = ctx.vak;
   vak.innerHTML = "";
 
-  if (stijl === "lijst") {
+  if (ctx.stijl === "lijst") {
     const lijst = document.createElement("ul");
-    vulDagenLijst(lijst, datums, alleItems(), { legeDagenTonen: true });
+    vulDagenLijst(lijst, datums, ctx.items, { legeDagenTonen: true });
     vak.appendChild(lijst);
   } else {
-    vak.appendChild(maakWeekRooster(datums, alleItems()));
+    vak.appendChild(maakWeekRooster(datums, ctx.items));
   }
 }
 
@@ -76,9 +105,11 @@ function maakWeekRooster(datums, alle) {
   // Huiswerk dat bij een les hoort staat al óp die les, dus niet nog eens bovenin
   const zonderTijd = perDag.map(lijst => lijst.filter(item => !heeftTijd(item) && !item.bijLes));
 
-  // Welke uren laten we zien? Alleen van je eerste tot je laatste afspraak van de week
-  let beginUur = 24;
-  let eindUur = 0;
+  // Welke uren laten we zien? Standaard 08:00–22:00 (langer als je eerder of later iets hebt).
+  // In het filter kun je kiezen voor "alleen uren met afspraken".
+  const alleenEigenUren = laadInstelling("alleenEigenUren", "nee") === "ja";
+  let beginUur = alleenEigenUren ? 24 : 8;
+  let eindUur = alleenEigenUren ? 0 : 22;
   for (const lijst of metTijd) {
     for (const afspraak of lijst) {
       beginUur = Math.min(beginUur, Math.floor(minuten(afspraak.begintijd) / 60));
@@ -99,6 +130,9 @@ function maakWeekRooster(datums, alle) {
 
   const scroll = div("rooster-scroll");
   const raster = div("week-raster");
+  // Zoveel kolommen als er dagen zijn (1 voor de dagweergave, 7 voor een week)
+  raster.style.gridTemplateColumns = "52px repeat(" + datums.length + ", minmax(96px, 1fr))";
+  raster.style.minWidth = (52 + datums.length * 96) + "px";
   scroll.appendChild(raster);
 
   // Rij 1: de dagen
@@ -249,18 +283,18 @@ function maakBlok(afspraak, beginUur, plek, overlaptMet) {
 // ===== MAAND =====
 // Opties (zoals elke dag gym) laten we in de maand weg, anders staat het in elk vakje
 function zonderOpties() {
-  return alleItems().filter(item => item.soort !== "optie");
+  return ctx.items.filter(item => item.soort !== "optie");
 }
 
 function toonMaand() {
-  const eerste = startVanMaand(focusDatum);
+  const eerste = startVanMaand(ctx.focus);
   const laatste = plusDagen(plusMaanden(eerste, 1), -1);
-  document.getElementById("periode-titel").textContent = hoofdletter(maandNaam(eerste));
+  ctx.titel.textContent = hoofdletter(maandNaam(eerste));
 
-  const vak = document.getElementById("weergave-overig");
+  const vak = ctx.vak;
   vak.innerHTML = "";
 
-  if (stijl === "lijst") {
+  if (ctx.stijl === "lijst") {
     const datums = [];
     for (let datum = eerste; datum <= laatste; datum = plusDagen(datum, 1)) datums.push(datum);
     const lijst = document.createElement("ul");
@@ -282,6 +316,7 @@ function maakMaandRooster(eerste, laatste, alle) {
     raster.appendChild(kop);
   }
 
+  const naarDag = ctx.openDag; // wat er gebeurt als je op een dag klikt
   const eind = plusDagen(startVanWeek(laatste), 6);
   for (let datum = startVanWeek(eerste); datum <= eind; datum = plusDagen(datum, 1)) {
     const dagItems = itemsOpDag(datum, alle);
@@ -313,8 +348,8 @@ function maakMaandRooster(eerste, laatste, alle) {
     }
 
     const dezeDag = datum;
-    cel.title = "Klik om deze week te bekijken";
-    cel.onclick = () => openWeek(dezeDag);
+    cel.title = "Klik om deze dag te bekijken";
+    cel.onclick = () => naarDag(dezeDag);
     raster.appendChild(cel);
   }
   return scroll;
@@ -322,11 +357,11 @@ function maakMaandRooster(eerste, laatste, alle) {
 
 // ===== JAAR =====
 function toonJaar() {
-  const begin = startVanMaand(focusDatum);
-  document.getElementById("periode-titel").textContent =
+  const begin = startVanMaand(ctx.focus);
+  ctx.titel.textContent =
     hoofdletter(maandNaam(begin)) + " – " + maandNaam(plusMaanden(begin, 11));
 
-  const alle = alleItems();
+  const alle = ctx.items;
   const maanden = [];
   for (let i = 0; i < 12; i++) {
     const start = plusMaanden(begin, i);
@@ -351,22 +386,22 @@ function toonJaar() {
 
   const drukste = Math.max(1, ...maanden.map(maand => maand.drukte));
 
-  const vak = document.getElementById("weergave-overig");
+  const vak = ctx.vak;
   vak.innerHTML = "";
   const raster = div("jaar-raster");
   vak.appendChild(raster);
 
-  for (const maand of maanden) raster.appendChild(maakMaandKaart(maand, drukste));
+  for (const maand of maanden) raster.appendChild(maakMaandKaart(maand, drukste, ctx.openMaand));
 }
 
-function maakMaandKaart(maand, drukste) {
+function maakMaandKaart(maand, drukste, naarMaand) {
   const kaart = div("maand-kaart" + (maand.start === startVanMaand(vandaag()) ? " is-vandaag" : ""));
 
   const kop = document.createElement("button");
   kop.className = "maand-kaart-kop";
   kop.textContent = hoofdletter(maandNaam(maand.start));
   kop.title = "Bekijk deze maand";
-  kop.onclick = () => openMaand(maand.start);
+  kop.onclick = () => naarMaand(maand.start);
   kaart.appendChild(kop);
 
   // De drukte-balk
