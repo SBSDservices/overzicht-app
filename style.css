@@ -998,6 +998,84 @@ li.is-te-laat { background-color: #fff5f5 !important; }
 .blok-klein span { display: none !important; }
 .blok-klein { padding: 1px 5px; }
 
+/* ===== Dagblokken (To-do en Studie): per dag wat je moet doen ===== */
+.dag-blok {
+  background-color: white;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border-left: 5px solid #dee2e6;
+}
+
+.dag-blok.is-vandaag { border-left-color: #4a3aff; }
+.dag-blok.te-laat { border-left-color: #e03131; background-color: #fffafa; }
+.dag-blok.met-tentamen { border-left-color: #c2255c; }
+
+.dag-blok-kop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.dag-blok-kop strong { font-size: 16px; }
+.dag-blok.is-vandaag .dag-blok-kop strong { color: #4a3aff; }
+.dag-blok.te-laat .dag-blok-kop strong { color: #e03131; }
+
+.dag-teller {
+  font-size: 13px;
+  color: #555;
+  background-color: #f1f3f5;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.dag-teller.druk { background-color: #ffe3e3; color: #c92a2a; font-weight: bold; }
+.dag-teller.af { background-color: #ebfbee; color: #2b8a3e; }
+
+.dag-agenda {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  margin: 4px 0 0;
+}
+
+.dag-blok ul.compact { margin-top: 8px; }
+.dag-blok ul.compact li { margin-bottom: 4px; }
+
+/* In een dagblok staat de datum al bovenaan, dus niet nog eens per taak */
+.dag-blok:not(.te-laat) .datum-info { display: none; }
+
+.dag-blok p.tentamen-dag {
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: #fff0f6;
+  color: #c2255c;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* In het leerplan-venster: wat staat er al op die dag? */
+.plan-dag-info {
+  font-size: 13px;
+  color: #555;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-top: 6px;
+}
+
+.plan-dag-info:empty { display: none; }
+.plan-dag-info.druk { background-color: #fff5f5; color: #c92a2a; }
+
+.plan-ook {
+  display: block;
+  font-size: 12px;
+  color: #888;
+}
+
 /* ===== Studie / leerplannen ===== */
 .studie-leeg { max-width: 560px; margin-top: 20px; }
 .studie-leeg p { color: #555; line-height: 1.5; }

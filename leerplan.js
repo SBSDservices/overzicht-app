@@ -56,40 +56,18 @@ function toonStudiePerDag() {
 
   // Wat je op eerdere dagen nog niet af hebt
   const achter = alleTaken.filter(item => item.datum < vandaag() && !item.klaar);
-  if (achter.length) {
-    voegKopToe(lijst, "⚠️ Nog niet af van eerdere dagen · " + achter.length, "te-laat");
-    for (const item of achter.sort((a, b) => a.datum.localeCompare(b.datum))) {
-      const li = maakRegel(item);
-      li.classList.add("is-te-laat");
-      lijst.appendChild(li);
-    }
-  }
+  if (achter.length) lijst.appendChild(maakDagBlok("⚠️ Nog niet af van eerdere dagen", achter, null)); // staat in app.js
 
+  // Per dag een blok (met wat er al in je agenda staat, zoals je tentamens)
   for (let datum = vandaag(); datum <= laatsteDag; datum = plusDagen(datum, 1)) {
-    const taken = alleTaken.filter(item => item.datum === datum).sort((a, b) => (a.vak || "").localeCompare(b.vak || ""));
+    const taken = alleTaken.filter(item => item.datum === datum);
     const toetsen = tentamens.filter(item => item.datum === datum);
     if (taken.length === 0 && toetsen.length === 0) continue;
 
-    const open = taken.filter(item => !item.klaar).length;
-    voegKopToe(lijst, dagKop(datum) + (taken.length ? (open ? " · " + open + " te doen" : " · ✓ alles af") : ""),
-      datum === vandaag() ? "is-vandaag" : "");
-
-    for (const toets of toetsen) {
-      const li = document.createElement("li");
-      li.className = "tentamen-dag";
-      li.textContent = "📝 " + toets.titel + (toets.begintijd ? " · " + toets.begintijd : "") +
-        (toets.locatie ? " · " + toets.locatie : "") + " · succes! 💪";
-      lijst.appendChild(li);
-    }
-    for (const item of taken) lijst.appendChild(maakRegel(item));
+    const blok = maakDagBlok(dagKop(datum), taken, datum);
+    if (toetsen.length) blok.classList.add("met-tentamen"); // het tentamen zelf staat al in de agenda-regel
+    lijst.appendChild(blok);
   }
-}
-
-function voegKopToe(lijst, tekst, extraClass) {
-  const kop = document.createElement("li");
-  kop.className = "dag-kop " + extraClass;
-  kop.textContent = tekst;
-  lijst.appendChild(kop);
 }
 
 // Per vak: hoe ver ben je?
@@ -228,6 +206,7 @@ function openPlanVenster(planId = null) {
 
   document.getElementById("plan-venster").showModal();
   toonPlanTaken();
+  toonPlanDagInfo();
   document.getElementById("plan-nieuwe-taak").focus();
 }
 
@@ -251,6 +230,7 @@ function voegPlanTaakToe(tekst) {
   for (const titel of regels) planRijen.push({ titel: titel, datum: datum });
   invoer.value = "";
   toonPlanTaken();
+  toonPlanDagInfo();
   invoer.focus();
 }
 
@@ -337,8 +317,25 @@ function toonPlanTaken() {
       const wat = document.createElement("span");
       wat.className = "tekst";
       wat.textContent = perDag[datum].join(" · ");
+
+      // Wat er die dag verder nog staat (andere vakken en je agenda)
+      const andere = andereTakenOp(datum);
+      if (andere.length) {
+        const ook = document.createElement("span");
+        ook.className = "plan-ook";
+        ook.textContent = "+ ook: " + andere.map(naamMetVak).join(" · ");
+        wat.appendChild(ook);
+      }
+      const agenda = dagSamenvatting(datum);
+      if (agenda) {
+        const regel = document.createElement("span");
+        regel.className = "dag-agenda";
+        regel.textContent = agenda;
+        wat.appendChild(regel);
+      }
+
       li.append(wanneer, wat);
-      if (perDag[datum].length >= 3) li.classList.add("druk");
+      if (perDag[datum].length + andere.length >= 3) li.classList.add("druk");
       overzicht.appendChild(li);
     }
     if (tentamen) {
@@ -351,6 +348,44 @@ function toonPlanTaken() {
   }
 
   toonPlanMelding();
+}
+
+// Taken op een dag die NIET bij dit leerplan horen (andere vakken, huiswerk, taken)
+function andereTakenOp(datum) {
+  return itemsOpDag(datum, items).filter(item =>
+    ["taak", "deadline", "huiswerk", "toets"].includes(item.soort) && !item.klaar &&
+    !(bewerkPlanId && item.planId === bewerkPlanId));
+}
+
+function naamMetVak(item) {
+  return item.titel + (item.vak ? " (" + item.vak + ")" : "");
+}
+
+// Onder het datumvakje: wat staat er op die dag al?
+function toonPlanDagInfo() {
+  const vak = document.getElementById("plan-dag-info");
+  const datum = document.getElementById("plan-nieuwe-datum").value;
+  vak.innerHTML = "";
+  vak.className = "plan-dag-info";
+  if (!datum) return;
+
+  const ditPlan = planRijen.filter(rij => rij.datum === datum).map(rij => rij.titel + " (dit vak)");
+  const andere = andereTakenOp(datum).map(naamMetVak);
+  const taken = ditPlan.concat(andere);
+  const agenda = dagSamenvatting(datum); // staat in app.js
+
+  const kop = document.createElement("strong");
+  kop.textContent = "Op " + mooieDatum(datum) + ": ";
+  vak.appendChild(kop);
+  vak.appendChild(document.createTextNode(
+    taken.length ? taken.length + (taken.length === 1 ? " taak" : " taken") + " — " + taken.join(" · ") : "nog geen taken 👍"));
+  if (agenda) {
+    const regel = document.createElement("span");
+    regel.className = "dag-agenda";
+    regel.textContent = agenda;
+    vak.appendChild(regel);
+  }
+  if (taken.length >= 3) vak.classList.add("druk");
 }
 
 function toonPlanMelding() {
@@ -454,6 +489,7 @@ function vanToevoegenNaarPlan() {
 document.querySelectorAll(".nieuw-plan-knop").forEach(knop => knop.addEventListener("click", () => openPlanVenster()));
 document.getElementById("plan-tentamen").addEventListener("change", kiesPlanTentamen);
 document.getElementById("plan-datum").addEventListener("change", toonPlanTaken);
+document.getElementById("plan-nieuwe-datum").addEventListener("change", toonPlanDagInfo);
 document.getElementById("plan-taak-toevoegen").addEventListener("click", () => voegPlanTaakToe());
 document.getElementById("plan-elke-dag").addEventListener("click", zetOpVolgorde);
 document.getElementById("plan-nieuwe-taak").addEventListener("keydown", event => {
