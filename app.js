@@ -571,21 +571,25 @@ function toonTeDoen() {
     (perDag[item.datum] = perDag[item.datum] || []).push(item);
   }
 
+  // De kolommen: eerst wat te laat is, dan vandaag + de 6 dagen erna (ook als er niks staat),
+  // en daarna de latere dagen waarop iets staat
+  const datums = new Set();
+  for (let i = 0; i < 7; i++) datums.add(plusDagen(vandaag(), i));
+  for (const datum of Object.keys(perDag)) datums.add(datum);
+
   if (teLaat.length) vak.appendChild(maakDagBlok("⚠️ Te laat", teLaat, null));
-  for (const datum of Object.keys(perDag).sort()) {
-    vak.appendChild(maakDagBlok(dagKop(datum), perDag[datum], datum));
+  for (const datum of [...datums].sort()) {
+    vak.appendChild(maakDagBlok(dagKop(datum), perDag[datum] || [], datum, true));
   }
 
   const open = teDoen.filter(item => groepVoor(item) && !item.klaar).length;
-  if (vak.children.length === 0) {
-    vak.innerHTML = '<p class="leeg">Niks met een datum te doen. Voeg iets toe met ➕ Toevoegen.</p>';
-  } else if (open === 0) {
-    vak.insertAdjacentHTML("afterbegin", '<p class="alles-af">🎉 Alles is af!</p>');
-  }
+  const melding = document.getElementById("todo-melding");
+  melding.textContent = open === 0 && teDoen.length ? "🎉 Alles is af!" : "";
+  melding.classList.toggle("verborgen", !melding.textContent);
 }
 
-// Eén blok voor één dag: kopje, wat er al in je agenda staat, en de taken
-function maakDagBlok(titel, taken, datum) {
+// Eén blok (kolom) voor één dag: kopje, wat er al in je agenda staat, en de taken
+function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
   const blok = div("dag-blok" + (datum === vandaag() ? " is-vandaag" : "") + (datum ? "" : " te-laat"));
 
   const open = taken.filter(item => !item.klaar).length;
@@ -593,15 +597,24 @@ function maakDagBlok(titel, taken, datum) {
   const naam = document.createElement("strong");
   naam.textContent = titel;
   const teller = document.createElement("span");
-  teller.className = "dag-teller" + (open >= 4 ? " druk" : "") + (open === 0 && taken.length ? " af" : "");
-  if (taken.length === 0) teller.textContent = "geen taken";
-  else if (open === 0) teller.textContent = "✓ alles af";
-  else teller.textContent = open + (open === 1 ? " taak" : " taken") + (open >= 4 ? " · druk!" : "");
+  teller.className = "dag-teller";
+  if (taken.length && open === 0) teller.textContent = "✓ af";
+  else if (open) teller.textContent = open;
   kop.append(naam, teller);
+
+  // ➕ om meteen iets op deze dag te zetten
+  if (datum && metToevoegKnop) {
+    const plus = document.createElement("button");
+    plus.className = "dag-plus";
+    plus.textContent = "➕";
+    plus.title = "Iets toevoegen op " + mooieDatum(datum);
+    plus.onclick = () => openToevoegen(datum);
+    kop.appendChild(plus);
+  }
   blok.appendChild(kop);
 
-  // Wat staat er die dag al in je agenda? (lessen, werk, tentamens)
-  const agenda = datum ? dagSamenvatting(datum) : "";
+  // Wat staat er die dag al in je agenda? (lessen, werk, tentamens) — elk op een eigen regel
+  const agenda = datum ? dagSamenvatting(datum, "\n") : "";
   if (agenda) {
     const regel = document.createElement("p");
     regel.className = "dag-agenda";
@@ -617,13 +630,14 @@ function maakDagBlok(titel, taken, datum) {
   const lijst = document.createElement("ul");
   lijst.className = "compact";
   for (const item of taken) lijst.appendChild(maakRegel(item));
+  if (taken.length === 0) lijst.innerHTML = '<p class="leeg">Niks gepland</p>';
   blok.appendChild(lijst);
   return blok;
 }
 
 // Een korte regel met wat er op een dag in je agenda staat,
 // bijv. "📚 les 12:00–14:45 · 📅 Werk 18:00–21:30"
-function dagSamenvatting(datum) {
+function dagSamenvatting(datum, scheiding = " · ") {
   const afspraken = itemsOpDag(datum, alleItems(false)).filter(item => heeftTijd(item) && item.soort !== "optie");
   const lessen = afspraken.filter(item => item.bronType === "school" && !isToets(item));
   const delen = [];
@@ -634,7 +648,7 @@ function dagSamenvatting(datum) {
   for (const item of afspraken.filter(item => !lessen.includes(item))) {
     delen.push((isToets(item) ? "📝 " : "📅 ") + item.titel + " " + item.begintijd + (item.eindtijd ? "–" + item.eindtijd : ""));
   }
-  return delen.join(" · ");
+  return delen.join(scheiding);
 }
 
 // ===== TAKENLIJST: dingen zonder datum, op volgorde van hoe belangrijk =====
@@ -755,14 +769,20 @@ function kiesWeergave(nieuw) {
 }
 
 // ----- Het toevoeg-venster -----
-function openToevoegen() {
+// datum: als je op de ➕ van een bepaalde dag klikt (bijv. "2026-10-21")
+function openToevoegen(datum) {
+  const opDag = typeof datum === "string";
+
   // Op de Studie-pagina voeg je een leerplan toe
-  if (pagina === "studie") return openPlanVenster(); // staat in leerplan.js
+  if (pagina === "studie" && !opDag) return openPlanVenster(); // staat in leerplan.js
 
   // Kies alvast de soort die past bij de pagina waar je bent
   const standaard = { todo: "deadline", taken: "taak", agenda: "afspraak", home: "taak" };
-  if (standaard[pagina]) document.getElementById("soort").value = standaard[pagina];
+  if (opDag) document.getElementById("soort").value = "taak";
+  else if (standaard[pagina]) document.getElementById("soort").value = standaard[pagina];
+  document.getElementById("herhaal").value = "";
   pasVeldenAan();
+  document.getElementById("datum").value = opDag ? datum : "";
   document.getElementById("toevoeg-venster").showModal();
   document.getElementById("titel").focus();
 }

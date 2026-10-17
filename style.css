@@ -1031,15 +1031,59 @@ li.is-te-laat { background-color: #fff5f5 !important; }
   white-space: nowrap;
 }
 
-.dag-teller.druk { background-color: #ffe3e3; color: #c92a2a; font-weight: bold; }
-.dag-teller.af { background-color: #ebfbee; color: #2b8a3e; }
+.dag-teller:empty { display: none; }
 
 .dag-agenda {
   display: block;
   font-size: 13px;
   color: #666;
   margin: 4px 0 0;
+  white-space: pre-line; /* elke afspraak op een eigen regel */
 }
+
+/* De dagen als kolommen naast elkaar (zoals een weekbord) */
+.dagen-kolommen {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  align-items: flex-start;
+  padding-bottom: 10px;
+  scroll-snap-type: x proximity;
+}
+
+.dagen-kolommen .dag-blok {
+  flex: 0 0 250px;
+  margin-bottom: 0;
+  scroll-snap-align: start;
+  border-left: none;
+  border-top: 5px solid #dee2e6;
+  min-height: 140px;
+  box-sizing: border-box;
+}
+
+.dagen-kolommen .dag-blok.is-vandaag { border-top-color: #4a3aff; }
+.dagen-kolommen .dag-blok.te-laat { border-top-color: #e03131; }
+.dagen-kolommen .dag-blok.met-tentamen { border-top-color: #c2255c; }
+
+/* Op de telefoon: bijna een hele kolom per scherm, en je veegt naar de volgende dag */
+@media (max-width: 600px) {
+  .dagen-kolommen .dag-blok { flex-basis: 78vw; }
+}
+
+.dagen-kolommen .leeg { font-size: 13px; margin: 4px 0; }
+
+.dag-plus {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+  opacity: 0.5;
+}
+
+.dag-plus:hover { opacity: 1; }
+
+.dag-blok-kop strong { flex: 1; }
 
 .dag-blok ul.compact { margin-top: 8px; }
 .dag-blok ul.compact li { margin-bottom: 4px; }
@@ -1068,7 +1112,6 @@ li.is-te-laat { background-color: #fff5f5 !important; }
 }
 
 .plan-dag-info:empty { display: none; }
-.plan-dag-info.druk { background-color: #fff5f5; color: #c92a2a; }
 
 .plan-ook {
   display: block;

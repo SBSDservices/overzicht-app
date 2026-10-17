@@ -96,7 +96,7 @@
       </section>
 
       <!-- ===== TO-DO: alles met een datum ===== -->
-      <section id="pagina-todo" class="pagina smal">
+      <section id="pagina-todo" class="pagina">
         <!-- Je leerplannen in het kort -->
         <div class="kaart todo-plannen">
           <div class="kaart-kop">
@@ -106,8 +106,9 @@
           <div id="todo-plannen"></div>
         </div>
 
-        <p class="info pagina-uitleg">Alles met een datum: huiswerk, toetsen, opdrachten en taken.</p>
-        <div id="lijst-te-doen"></div>
+        <p class="info pagina-uitleg">Per dag wat je moet doen. Scroll of veeg opzij voor de volgende dagen.</p>
+        <p id="todo-melding" class="alles-af verborgen"></p>
+        <div id="lijst-te-doen" class="dagen-kolommen"></div>
       </section>
 
       <!-- ===== TAKEN: zonder deadline, plus doelen ===== -->
@@ -136,7 +137,7 @@
               <h2>📅 Per dag</h2>
               <button class="hoofdknop nieuw-plan-knop">➕ Nieuw leerplan</button>
             </div>
-            <div id="studie-per-dag"></div>
+            <div id="studie-per-dag" class="dagen-kolommen"></div>
           </div>
           <div>
             <div class="sectie-kop">

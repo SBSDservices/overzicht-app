@@ -335,7 +335,6 @@ function toonPlanTaken() {
       }
 
       li.append(wanneer, wat);
-      if (perDag[datum].length + andere.length >= 3) li.classList.add("druk");
       overzicht.appendChild(li);
     }
     if (tentamen) {
@@ -385,7 +384,6 @@ function toonPlanDagInfo() {
     regel.textContent = agenda;
     vak.appendChild(regel);
   }
-  if (taken.length >= 3) vak.classList.add("druk");
 }
 
 function toonPlanMelding() {
