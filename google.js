@@ -242,17 +242,14 @@ async function haalTakenOp() {
   const driveNamen = data.lesNamen || data.lesVakken; // lesVakken: van een oudere versie
   if (driveNamen) lesNamen = { ...lesNamen, ...driveNamen };
 
-  // Ideeën: per idee winnen de nieuwste wijzigingen (hier of op Drive)
-  const driveIdeeen = data.ideeen || [];
-  const hierGewijzigd = ideeen.filter(idee => idee.bijgewerkt > sinds);
-  const samen = new Map(driveIdeeen.map(idee => [idee.id, idee]));
-  for (const idee of hierGewijzigd) {
-    const opDrive = samen.get(idee.id);
-    if (!opDrive || idee.bijgewerkt > opDrive.bijgewerkt) samen.set(idee.id, idee);
-  }
-  ideeen = [...samen.values()];
+  // Ideeën en leerplannen: per stuk winnen de nieuwste wijzigingen (hier of op Drive)
+  const ideeenSamen = voegSamen(ideeen, data.ideeen || [], sinds);
+  const plannenSamen = voegSamen(leerplannen, data.leerplannen || [], sinds);
+  ideeen = ideeenSamen.lijst;
+  leerplannen = plannenSamen.lijst;
 
-  const moetOpslaan = nieuwHier.length || oudFormaat || !data.lesNamen || hierGewijzigd.length;
+  const moetOpslaan = nieuwHier.length || oudFormaat || !data.lesNamen ||
+    ideeenSamen.hierGewijzigd || plannenSamen.hierGewijzigd;
   if (moetOpslaan) {
     bewaarItems(); // stuurt het ook naar Drive
   } else {
@@ -261,9 +258,21 @@ async function haalTakenOp() {
   }
 }
 
+// Voeg een lijst van hier en een lijst van Drive samen.
+// Wat hier is gewijzigd sinds de laatste keer synchroniseren, wint als het nieuwer is.
+function voegSamen(hier, opDrive, sinds) {
+  const samen = new Map(opDrive.map(stuk => [stuk.id, stuk]));
+  const gewijzigd = hier.filter(stuk => stuk.bijgewerkt > sinds);
+  for (const stuk of gewijzigd) {
+    const daar = samen.get(stuk.id);
+    if (!daar || stuk.bijgewerkt > daar.bijgewerkt) samen.set(stuk.id, stuk);
+  }
+  return { lijst: [...samen.values()], hierGewijzigd: gewijzigd.length };
+}
+
 // Wat we in je Drive opslaan
 function driveInhoud() {
-  return JSON.stringify({ versie: 4, items: items, lesNamen: lesNamen, ideeen: ideeen });
+  return JSON.stringify({ versie: 5, items: items, lesNamen: lesNamen, ideeen: ideeen, leerplannen: leerplannen });
 }
 
 async function maakDriveBestand() {

@@ -14,11 +14,15 @@ let lesNamen = { ...laadJson("lesVakken", {}), ...laadJson("lesNamen", {}) };
 // { id, titel, categorie, tekst, links: [{ url, notitie }], aangemaakt, bijgewerkt }
 let ideeen = laadJson("ideeen", []);
 
+// Je leerplannen voor tentamens (zie leerplan.js). Elk plan:
+// { id, vak, tentamenDatum, onderdelen, actie, start, herhaalAantal, overslaan, verdeling, bijgewerkt }
+let leerplannen = laadJson("leerplannen", []);
+
 // Afspraken uit je Google Agenda (worden ingevuld door google.js)
 let googleAfspraken = [];
 
 // Wat je aan het bekijken bent
-const PAGINAS = { home: "Home", todo: "To-do", taken: "Takenlijst", agenda: "Agenda", ideeen: "Ideeën" };
+const PAGINAS = { home: "Home", todo: "To-do", taken: "Takenlijst", studie: "Studie", agenda: "Agenda", ideeen: "Ideeën" };
 let pagina = PAGINAS[location.hash.slice(1)] ? location.hash.slice(1) : "home"; // bijv. #agenda
 let weergave = laadInstelling("weergave", "week");   // in de agenda: week, maand of jaar
 if (!["week", "maand", "jaar"].includes(weergave)) weergave = "week";
@@ -44,6 +48,7 @@ function bewaarLokaal() {
     localStorage.setItem("items", JSON.stringify(items));
     localStorage.setItem("lesNamen", JSON.stringify(lesNamen));
     localStorage.setItem("ideeen", JSON.stringify(ideeen));
+    localStorage.setItem("leerplannen", JSON.stringify(leerplannen));
   } catch {
     console.warn("Opslaan lukt niet in deze browser");
   }
@@ -138,7 +143,7 @@ function dagKop(datum) {
 
 // ===== 3. ITEMS KIEZEN EN SORTEREN =====
 // Al je items samen (eigen + Google), alleen die passen bij je zoekterm
-function alleItems() {
+function alleItems(metZoeken = true) {
   const lesIds = new Set(googleAfspraken.map(les => les.id));
 
   const eigen = items
@@ -147,7 +152,8 @@ function alleItems() {
     // Huiswerk dat bij een les hoort, krijgt een merkje (dan zetten we het niet dubbel in het rooster)
     .map(item => item.lesId && lesIds.has(item.lesId) ? { ...item, bijLes: true } : item);
 
-  return eigen.concat(googleAfspraken.map(verrijkLes)).filter(pastBijZoeken);
+  const alles = eigen.concat(googleAfspraken.map(verrijkLes));
+  return metZoeken ? alles.filter(pastBijZoeken) : alles;
 }
 
 // Voeg aan een les uit Google toe wat jij erbij hebt gezet: naam, tentamen, huiswerk
@@ -174,7 +180,7 @@ function isTentamenNaam(naam) {
 
 function pastBijZoeken(item) {
   if (!zoekterm) return true;
-  const tekst = [item.titel, item.origineel, item.locatie, item.agendaNaam].join(" ").toLowerCase();
+  const tekst = [item.titel, item.origineel, item.locatie, item.agendaNaam, item.vak].join(" ").toLowerCase();
   return tekst.includes(zoekterm);
 }
 
@@ -688,6 +694,7 @@ function toonAlles() {
   if (pagina === "home") toonHome();         // staat in home.js
   if (pagina === "todo") toonTeDoen();
   if (pagina === "taken") toonTaken();
+  if (pagina === "studie") toonStudie();     // staat in leerplan.js
   if (pagina === "ideeen") toonIdeeen();     // staat in ideeen.js
   if (pagina === "agenda") {
     if (weergave === "week") toonWeek();     // staat in weergaven.js
@@ -717,6 +724,9 @@ function kiesWeergave(nieuw) {
 
 // ----- Het toevoeg-venster -----
 function openToevoegen() {
+  // Op de Studie-pagina voeg je een leerplan toe
+  if (pagina === "studie") return openPlanVenster(); // staat in leerplan.js
+
   // Kies alvast de soort die past bij de pagina waar je bent
   const standaard = { todo: "deadline", taken: "taak", agenda: "afspraak", home: "taak" };
   if (standaard[pagina]) document.getElementById("soort").value = standaard[pagina];

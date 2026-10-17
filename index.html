@@ -15,6 +15,7 @@
     <button data-pagina="home"><span class="menu-icoon">🏠</span><span>Home</span></button>
     <button data-pagina="todo"><span class="menu-icoon">✅</span><span>To-do</span></button>
     <button data-pagina="taken"><span class="menu-icoon">📋</span><span>Taken</span></button>
+    <button data-pagina="studie"><span class="menu-icoon">📚</span><span>Studie</span></button>
     <button data-pagina="agenda"><span class="menu-icoon">📅</span><span>Agenda</span></button>
     <button data-pagina="ideeen"><span class="menu-icoon">💡</span><span>Ideeën</span></button>
   </nav>
@@ -109,6 +110,32 @@
           <h2>🎯 Doelen</h2>
         </div>
         <ul id="lijst-doel"></ul>
+      </section>
+
+      <!-- ===== STUDIE: leerplannen voor tentamens ===== -->
+      <section id="pagina-studie" class="pagina">
+        <div id="studie-leeg" class="kaart studie-leeg">
+          <h2>📚 Maak een leerplan voor je tentamens</h2>
+          <p>Kies een tentamen, vul in wat je moet leren (bijvoorbeeld hoofdstuk 1 t/m 7), en de app verdeelt het over de dagen
+            die je nog hebt. Op het eind houd je dagen over om alles te herhalen.</p>
+          <button class="hoofdknop nieuw-plan-knop">➕ Nieuw leerplan</button>
+        </div>
+
+        <div id="studie-inhoud" class="studie-layout">
+          <div>
+            <div class="sectie-kop">
+              <h2>📅 Per dag</h2>
+              <button class="hoofdknop nieuw-plan-knop">➕ Nieuw leerplan</button>
+            </div>
+            <ul id="studie-per-dag"></ul>
+          </div>
+          <div>
+            <div class="sectie-kop">
+              <h2>📚 Per vak</h2>
+            </div>
+            <div id="studie-per-vak"></div>
+          </div>
+        </div>
       </section>
 
       <!-- ===== AGENDA: week, maand, jaar ===== -->
@@ -242,6 +269,71 @@
     </form>
   </dialog>
 
+  <!-- Het venster om een leerplan te maken -->
+  <dialog id="plan-venster">
+    <form method="dialog">
+      <button class="venster-sluiten" title="Sluiten">✕</button>
+    </form>
+    <h3>📚 Nieuw leerplan</h3>
+
+    <form id="plan-formulier">
+      <label class="plan-veld">Voor welk tentamen?
+        <select id="plan-tentamen"></select>
+      </label>
+      <div class="plan-rij">
+        <label class="plan-veld">Vak
+          <input id="plan-vak" placeholder="Bijv. Bedrijfsmanagement" required>
+        </label>
+        <label class="plan-veld">Datum tentamen
+          <input id="plan-datum" type="date" required>
+        </label>
+      </div>
+
+      <label class="plan-veld">Wat moet je leren? <span class="info">(één per regel)</span>
+        <textarea id="plan-onderdelen" rows="5" placeholder="Hoofdstuk 1&#10;Hoofdstuk 2&#10;…"></textarea>
+      </label>
+      <div class="plan-snel">
+        Snel invullen:
+        <input id="plan-aantal" type="number" min="1" max="40" value="7" aria-label="Aantal hoofdstukken">
+        <button type="button" id="plan-vul-hoofdstukken">hoofdstukken</button>
+      </div>
+
+      <label class="plan-veld">Wat doe je per onderdeel?
+        <input id="plan-actie" value="samenvatten en leren">
+      </label>
+
+      <div class="plan-rij">
+        <label class="plan-veld">Beginnen op
+          <input id="plan-start" type="date">
+        </label>
+        <label class="plan-veld">Dagen om alles te herhalen
+          <input id="plan-herhaal" type="number" min="0" max="7" value="2">
+        </label>
+      </div>
+
+      <div class="plan-rij">
+        <label class="plan-veld">Verdelen
+          <select id="plan-verdeling">
+            <option value="elkeDag">Elke dag één, zo snel mogelijk</option>
+            <option value="verspreid">Gelijk verspreid over alle dagen</option>
+          </select>
+        </label>
+        <div class="plan-veld">Vrij op
+          <span id="plan-overslaan" class="dagen-kiezer">
+            <label><input type="checkbox" value="6"> za</label>
+            <label><input type="checkbox" value="0"> zo</label>
+          </span>
+        </div>
+      </div>
+
+      <h4>Zo ziet je planning eruit</h4>
+      <p id="plan-melding" class="overlap"></p>
+      <ul id="plan-voorbeeld" class="compact"></ul>
+
+      <button type="submit" class="hoofdknop">✓ Leerplan opslaan</button>
+    </form>
+  </dialog>
+
   <!-- Het venster dat opent als je op een les klikt -->
   <dialog id="les-venster">
     <form method="dialog">
@@ -271,6 +363,7 @@
   <script src="lessen.js"></script>
   <script src="ideeen.js"></script>
   <script src="home.js"></script>
+  <script src="leerplan.js"></script>
   <script src="app.js"></script>
   <script src="google.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="startGoogle()"></script>

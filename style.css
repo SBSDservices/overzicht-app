@@ -104,8 +104,10 @@ body {
   gap: 8px;
   flex: 1;
   justify-content: flex-end;
-  min-width: 260px;
+  min-width: min(260px, 100%);
 }
+
+.kop-acties .hoofdknop { white-space: nowrap; }
 
 .kop-acties #zoek { flex: 1; max-width: 280px; min-width: 0; }
 
@@ -995,6 +997,117 @@ li.is-te-laat { background-color: #fff5f5 !important; }
 /* Kleine blokken in het rooster: alleen de titel */
 .blok-klein span { display: none !important; }
 .blok-klein { padding: 1px 5px; }
+
+/* ===== Studie / leerplannen ===== */
+.studie-leeg { max-width: 560px; margin-top: 20px; }
+.studie-leeg p { color: #555; line-height: 1.5; }
+
+.studie-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 1000px) {
+  .studie-layout { grid-template-columns: 3fr 2fr; }
+}
+
+#studie-per-vak { display: grid; gap: 12px; }
+
+.plan-kaart details { margin-top: 10px; }
+.plan-kaart summary { cursor: pointer; color: #4a3aff; font-size: 14px; }
+
+.plan-knoppen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.plan-knoppen button:not(.link-knop) { font-size: 14px; cursor: pointer; }
+
+li.tentamen-dag {
+  background-color: #fff0f6;
+  border-left-color: #c2255c;
+  font-weight: bold;
+}
+
+/* Het leerplan-venster */
+#plan-venster {
+  border: none;
+  border-radius: 12px;
+  padding: 20px;
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  box-sizing: border-box;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+#plan-venster::backdrop { background-color: rgba(0, 0, 0, 0.35); }
+#plan-venster h3 { margin: 0 0 4px; color: #4a3aff; }
+#plan-venster h4 { margin: 16px 0 6px; }
+
+#plan-venster form[method="dialog"] {
+  float: right;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
+
+#plan-venster .venster-sluiten {
+  border: none;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #888;
+}
+
+#plan-formulier {
+  display: block;
+  padding: 8px 0 0;
+}
+
+.plan-veld {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-veld input, .plan-veld select, .plan-veld textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.plan-rij {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.plan-rij .plan-veld { min-width: 180px; }
+
+.plan-snel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #555;
+  margin: -4px 0 12px;
+}
+
+#plan-aantal { width: 64px; }
+#plan-overslaan { display: flex; }
+#plan-vul-hoofdstukken { cursor: pointer; font-size: 14px; }
+
+#plan-formulier button[type="submit"] { width: 100%; margin-top: 12px; padding: 12px; }
 
 /* ===== Telefoon ===== */
 @media (max-width: 600px) {

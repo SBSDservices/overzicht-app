@@ -148,17 +148,28 @@ function toonDashBinnenkort() {
   const lijst = document.getElementById("dash-binnenkort");
   lijst.innerHTML = "";
 
-  const binnenkort = items
-    .filter(item => (item.soort === "toets" || item.soort === "deadline") && item.datum && !item.klaar)
+  // Toetsen uit je agenda (ook Google) en je eigen deadlines
+  const toetsen = komendeTentamens().filter(item => !item.klaar); // staat in leerplan.js
+  const deadlines = items.filter(item => item.soort === "deadline" && item.datum && !item.klaar);
+  const binnenkort = toetsen.concat(deadlines)
     .filter(item => dagenTot(item.datum) >= 0 && dagenTot(item.datum) <= 14)
     .sort((a, b) => a.datum.localeCompare(b.datum) || (a.begintijd || "").localeCompare(b.begintijd || ""));
 
-  for (const item of binnenkort.slice(0, 6)) lijst.appendChild(maakRegel(item));
+  for (const item of binnenkort.slice(0, 6)) {
+    if (item.bron === "google") {
+      // Een toets uit Google: laat de dag erbij zien
+      const li = maakRegelVoor(item);
+      li.querySelector(".tijd").textContent = mooieDatum(item.datum) + (item.begintijd ? " " + item.begintijd : "");
+      lijst.appendChild(li);
+    } else {
+      lijst.appendChild(maakRegel(item));
+    }
+  }
   if (binnenkort.length > 6) lijst.insertAdjacentHTML("beforeend",
     '<p class="info">+' + (binnenkort.length - 6) + " meer bij To-do</p>");
   if (binnenkort.length === 0) lijst.innerHTML = '<p class="leeg">Geen toetsen of deadlines in de komende 2 weken.</p>';
 
-  return { toetsen: binnenkort.filter(item => item.soort === "toets").length };
+  return { toetsen: binnenkort.filter(item => isToets(item)).length };
 }
 
 // 💡 De 3 ideeën waar je het laatst aan hebt gewerkt
