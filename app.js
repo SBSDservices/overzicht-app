@@ -1180,6 +1180,17 @@ function zoek() {
 // ===== 8. STARTEN =====
 document.getElementById("formulier").addEventListener("submit", voegToe);
 document.getElementById("todo-formulier").addEventListener("submit", voegTodoToe);
+
+// Een venster sluiten door ernaast te klikken (op het grijze vlak)
+document.querySelectorAll("dialog").forEach(venster => {
+  venster.addEventListener("click", event => {
+    if (event.target !== venster) return; // je klikte ín het venster
+    const vak = venster.getBoundingClientRect();
+    const erbuiten = event.clientX < vak.left || event.clientX > vak.right ||
+      event.clientY < vak.top || event.clientY > vak.bottom;
+    if (erbuiten) venster.close();
+  });
+});
 document.querySelectorAll("[data-todo-sorteer]").forEach(knop =>
   knop.addEventListener("click", () => {
     bewaarInstelling("todoSorteer", knop.dataset.todoSorteer);

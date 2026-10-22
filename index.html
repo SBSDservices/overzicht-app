@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261022a">
+  <link rel="stylesheet" href="style.css?v=20261022b">
 
   <!-- Om de app op je telefoon te installeren -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -349,7 +349,7 @@
   <!-- Het venster om iets toe te voegen -->
   <dialog id="toevoeg-venster">
     <form method="dialog">
-      <button class="venster-sluiten" title="Sluiten"></button>
+      <button class="venster-sluiten" title="Sluiten" aria-label="Sluiten"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </form>
     <h3>Toevoegen</h3>
 
@@ -410,7 +410,7 @@
   <!-- Het venster om een leerplan te maken -->
   <dialog id="plan-venster">
     <form method="dialog">
-      <button class="venster-sluiten" title="Sluiten"></button>
+      <button class="venster-sluiten" title="Sluiten" aria-label="Sluiten"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </form>
     <h3 id="plan-venster-titel">Nieuw leerplan</h3>
 
@@ -452,7 +452,7 @@
   <!-- Het venster dat opent als je op een les klikt -->
   <dialog id="les-venster">
     <form method="dialog">
-      <button class="venster-sluiten" title="Sluiten"></button>
+      <button class="venster-sluiten" title="Sluiten" aria-label="Sluiten"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </form>
     <h3 id="les-titel"></h3>
     <p id="les-info" class="info"></p>
@@ -490,13 +490,13 @@
   </script>
 
   <!-- De JavaScript-bestanden (het ?v= erachter is het versienummer, zodat je browser geen oude versie gebruikt) -->
-  <script src="weergaven.js?v=20261022a"></script>
-  <script src="lessen.js?v=20261022a"></script>
-  <script src="ideeen.js?v=20261022a"></script>
-  <script src="home.js?v=20261022a"></script>
-  <script src="leerplan.js?v=20261022a"></script>
-  <script src="app.js?v=20261022a"></script>
-  <script src="google.js?v=20261022a"></script>
+  <script src="weergaven.js?v=20261022b"></script>
+  <script src="lessen.js?v=20261022b"></script>
+  <script src="ideeen.js?v=20261022b"></script>
+  <script src="home.js?v=20261022b"></script>
+  <script src="leerplan.js?v=20261022b"></script>
+  <script src="app.js?v=20261022b"></script>
+  <script src="google.js?v=20261022b"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="startGoogle()"></script>
 </body>
 
