@@ -1951,6 +1951,75 @@ dialog::backdrop { background-color: rgba(17, 24, 39, 0.4) !important; }
 /* Op Home in een smalle kolom: de maand en het jaar passen in de kaart */
 .home-agenda .jaar-raster { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 
+/* ----- Verschuiven: kalender-knopje en slepen ----- */
+.datum-knop {
+  border: none !important;
+  background: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  color: var(--tekst-licht);
+  display: inline-flex;
+  align-items: center;
+}
+
+.datum-knop svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.datum-knop:hover { color: var(--accent); }
+
+/* Het onzichtbare datumvakje achter het kalender-knopje */
+.verborgen-kiezer {
+  position: fixed;
+  left: 50%;
+  top: 40%;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+li.sleepbaar { cursor: grab; }
+li.sleept { opacity: 0.4; }
+
+/* Waar je de taak loslaat, licht blauw op */
+.sleep-hier {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+  background-color: var(--accent-zacht) !important;
+}
+
+/* Telefoons zonder muis: geen "grijp"-cursor */
+@media (hover: none) {
+  li.sleepbaar { cursor: default; }
+}
+
+/* ----- Mijn to-do ----- */
+.mijn-todo .info { font-size: 13px; margin: -4px 0 8px; }
+
+.prio-groep {
+  border-radius: 8px;
+  padding: 2px 4px 4px;
+  margin-bottom: 6px;
+}
+
+.prio-groep .groep-kop { margin: 10px 0 6px; }
+.prio-hoog .groep-kop { color: var(--rood); }
+.sleep-tip { font-size: 12px; margin: 0 0 4px; }
+
+.schakelaar.klein button { font-size: 12px; padding: 3px 9px; }
+
+.todo-school-kop { margin-top: 0; }
+
+@media (min-width: 1000px) {
+  .todo-layout { grid-template-columns: 340px minmax(0, 1fr); }
+}
+
 /* De foutmelding onderaan het scherm */
 .fout-melding {
   position: fixed;

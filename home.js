@@ -24,7 +24,7 @@ function toonHome() {
   document.getElementById("dash-morgen-titel").textContent = "Morgen · " + mooieDatum(plusDagen(vandaag(), 1));
 
   // Alles zonder deadline (zelfde lijst als in de To-do)
-  const geenDeadline = toonTakenlijst("dash-geen-deadline"); // staat in app.js
+  const geenDeadline = toonTakenlijst("dash-geen-deadline", { alleenZonderDatum: true }); // staat in app.js
   document.getElementById("kaart-geen-deadline").classList.toggle("verborgen", geenDeadline === 0);
 
   toonOpties(alleItems(false)); // staat in app.js

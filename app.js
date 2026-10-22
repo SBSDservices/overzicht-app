@@ -421,11 +421,78 @@ function maakRegel(item) {
   if (item.datum) tekst.appendChild(maakDatumInfo(item));
   li.appendChild(tekst);
 
-  // Taken zonder datum: knopje om te kiezen hoe belangrijk ze zijn
-  if (item.soort === "taak" && !item.datum) li.appendChild(maakPrioriteitKnop(item));
+  // Je eigen taken: knopje om te kiezen hoe belangrijk ze zijn
+  if (isEigenTaak(item)) li.appendChild(maakPrioriteitKnop(item));
+
+  // Verschuiven: met het kalender-knopje (werkt ook op je telefoon) of door te slepen (laptop).
+  // Een herhalende taak (zoals elke week wegen) verschuif je niet per keer.
+  if (!item.herhalingVan) {
+    li.appendChild(maakDatumKnop(item));
+    li.draggable = true;
+    li.classList.add("sleepbaar");
+    li.ondragstart = event => {
+      event.dataTransfer.setData("text/plain", String(item.id));
+      event.dataTransfer.effectAllowed = "move";
+      li.classList.add("sleept");
+    };
+    li.ondragend = () => li.classList.remove("sleept");
+  }
 
   li.appendChild(maakVerwijderKnop(id));
   return li;
+}
+
+// Het kalender-knopje: kies een andere dag (of maak de datum leeg)
+function maakDatumKnop(item) {
+  const knop = document.createElement("button");
+  knop.className = "datum-knop";
+  knop.title = "Naar een andere dag verplaatsen";
+  knop.innerHTML = '<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M16 2.5v4M8 2.5v4M3.5 10h17"/></svg>';
+  knop.onclick = event => {
+    event.stopPropagation();
+    // Een onzichtbaar datumvakje, waarvan we meteen de kalender openen
+    const kiezer = document.createElement("input");
+    kiezer.type = "date";
+    kiezer.value = item.datum || "";
+    kiezer.className = "verborgen-kiezer";
+    document.body.appendChild(kiezer);
+    kiezer.onchange = () => {
+      const echt = items.find(ander => ander.id === item.id);
+      if (echt) echt.datum = kiezer.value; // leeg = geen datum meer
+      kiezer.remove();
+      bewaarItems();
+      toonAlles();
+    };
+    kiezer.onblur = () => setTimeout(() => kiezer.remove(), 300);
+    try {
+      kiezer.showPicker();
+    } catch {
+      kiezer.focus();
+      kiezer.click();
+    }
+  };
+  return knop;
+}
+
+// Maak van een vak een plek waar je taken naartoe kunt slepen
+function maakSleepDoel(element, bijLoslaten) {
+  element.addEventListener("dragover", event => {
+    event.preventDefault();
+    element.classList.add("sleep-hier");
+  });
+  element.addEventListener("dragleave", event => {
+    if (!element.contains(event.relatedTarget)) element.classList.remove("sleep-hier");
+  });
+  element.addEventListener("drop", event => {
+    event.preventDefault();
+    element.classList.remove("sleep-hier");
+    const id = Number(event.dataTransfer.getData("text/plain"));
+    const item = items.find(ander => ander.id === id);
+    if (!item) return;
+    bijLoslaten(item);
+    bewaarItems();
+    toonAlles();
+  });
 }
 
 const PRIORITEIT = {
@@ -515,6 +582,9 @@ function vulDagenLijst(lijst, datums, alle, { welkeSoorten = null, legeDagenTone
 
 // ===== 5. PAGINA "TAKEN": takenlijst en doelen =====
 function toonTaken() {
+  const sorteren = laadInstelling("todoSorteer", "prioriteit");
+  document.querySelectorAll("[data-todo-sorteer]").forEach(knop =>
+    knop.classList.toggle("actief", knop.dataset.todoSorteer === sorteren));
   toonTakenlijst();
   toonLijst("lijst-doel", ["doel"], alleItems());
 }
@@ -559,10 +629,11 @@ function toonTeDoen() {
   const vak = document.getElementById("lijst-te-doen");
   vak.innerHTML = "";
 
-  // Alles wat je moet DOEN (dus geen afspraken, vakanties of doelen)
+  // Alles voor school: huiswerk, opdrachten, toetsen en je leerplannen
+  // (je eigen taken staan apart bij "Mijn to-do")
   const teDoen = [];
   for (const item of items.filter(pastBijZoeken)) {
-    if (!["taak", "deadline", "huiswerk", "toets"].includes(item.soort)) continue;
+    if (!isSchoolTaak(item)) continue;
 
     if (item.herhaal) {
       // Herhalende taken: de keren in de komende 7 dagen
@@ -597,8 +668,20 @@ function toonTeDoen() {
 
   const open = teDoen.filter(item => groepVoor(item) && !item.klaar).length;
   const melding = document.getElementById("todo-melding");
-  melding.textContent = open === 0 && teDoen.length ? "🎉 Alles is af!" : "";
+  melding.textContent = open === 0 && teDoen.length ? "🎉 Alles voor school is af!" : "";
   melding.classList.toggle("verborgen", !melding.textContent);
+}
+
+// Hoort deze taak bij school? (huiswerk, toetsen, leerplannen, of iets met een vak of les)
+function isSchoolTaak(item) {
+  if (item.soort === "huiswerk" || item.soort === "toets") return true;
+  if (item.planId || item.lesId) return true;
+  return item.soort === "deadline" && Boolean(item.vak);
+}
+
+// Je eigen taken (alles wat je moet doen, maar niet voor school)
+function isEigenTaak(item) {
+  return (item.soort === "taak" || item.soort === "deadline") && !isSchoolTaak(item);
 }
 
 // Eén blok (kolom) voor één dag: kopje, wat er al in je agenda staat, en de taken
@@ -621,10 +704,13 @@ function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
     plus.className = "dag-plus";
     plus.textContent = "+";
     plus.title = "Iets toevoegen op " + mooieDatum(datum);
-    plus.onclick = () => openToevoegen(datum);
+    plus.onclick = () => openToevoegen(datum, "huiswerk");
     kop.appendChild(plus);
   }
   blok.appendChild(kop);
+
+  // Een taak hierheen slepen = op deze dag zetten
+  if (datum) maakSleepDoel(blok, item => { item.datum = datum; });
 
 
   taken.sort((a, b) =>
@@ -663,33 +749,77 @@ function dagSamenvatting(datum, scheiding = " · ") {
 }
 
 // ===== TAKENLIJST: dingen zonder datum, op volgorde van hoe belangrijk =====
-// lijstId: waar de lijst komt (in de To-do, of op Home). Geeft terug hoeveel er nog open staan.
-function toonTakenlijst(lijstId = "lijst-takenlijst") {
+// ===== MIJN TO-DO: je eigen taken (niet voor school), met en zonder datum =====
+// lijstId: waar de lijst komt (in de To-do, of op Home).
+// alleenZonderDatum: op Home staan taken met een datum al bij Vandaag/Morgen.
+// Geeft terug hoeveel er nog open staan.
+function toonTakenlijst(lijstId = "lijst-takenlijst", { alleenZonderDatum = false } = {}) {
   const lijst = document.getElementById(lijstId);
   lijst.innerHTML = "";
 
   // Afgevinkte taken laten we nog 2 dagen zien, daarna verdwijnen ze
   const tweeDagenGeleden = Date.now() - 2 * 86400000;
-  const taken = items.filter(item =>
-    item.soort === "taak" && !item.datum && pastBijZoeken(item) &&
-    !(item.klaar && (item.klaarSinds || 0) < tweeDagenGeleden));
+  const taken = [];
+  for (const item of items.filter(item => isEigenTaak(item) && pastBijZoeken(item))) {
+    if (item.klaar && (item.klaarSinds || 0) < tweeDagenGeleden) continue;
+    if (alleenZonderDatum && item.datum) continue;
+    if (item.herhaal) {
+      // Herhalende taak: alleen de eerstvolgende keer
+      for (let i = 0; i < 7; i++) {
+        const datum = plusDagen(vandaag(), i);
+        if (valtOp(item, datum)) {
+          taken.push(herhaling(item, datum));
+          break;
+        }
+      }
+    } else {
+      // Een taak met een datum die al lang voorbij en af is, hoef je niet meer te zien
+      if (item.klaar && item.datum && dagenTot(item.datum) < -2) continue;
+      taken.push(item);
+    }
+  }
 
-  for (const sleutel of ["hoog", "normaal", "laag"]) {
-    const groep = taken.filter(item => (item.prioriteit || "normaal") === sleutel);
-    if (groep.length === 0) continue;
-    groep.sort((a, b) => a.klaar - b.klaar || a.id - b.id);
+  // Volgorde: eerst wat open staat, dan op datum (zonder datum achteraan)
+  const opDatum = (a, b) =>
+    (a.klaar - b.klaar) ||
+    (a.datum || "9999").localeCompare(b.datum || "9999") ||
+    a.id - b.id;
 
-    const nogOpen = groep.filter(item => !item.klaar).length;
-    const kop = document.createElement("li");
-    kop.className = "dag-kop" + (sleutel === "hoog" ? " te-laat" : "");
-    kop.textContent = PRIORITEIT[sleutel].icoon + " " + PRIORITEIT[sleutel].titel + (nogOpen ? " · " + nogOpen : " · ✓");
-    lijst.appendChild(kop);
+  const sorteren = laadInstelling("todoSorteer", "prioriteit");
+  if (sorteren === "datum" && !alleenZonderDatum) {
+    // Alles in één lijst, op datum
+    const ul = document.createElement("ul");
+    ul.className = "compact";
+    for (const item of taken.sort(opDatum)) ul.appendChild(maakRegel(item));
+    lijst.appendChild(ul);
+  } else {
+    // Per prioriteit: 🔥 Belangrijk, ☆ Normaal, 💤 Als ik tijd heb
+    for (const sleutel of ["hoog", "normaal", "laag"]) {
+      const groep = taken.filter(item => (item.prioriteit || "normaal") === sleutel).sort(opDatum);
 
-    for (const item of groep) lijst.appendChild(maakRegel(item));
+      const blok = div("prio-groep prio-" + sleutel);
+      const kop = document.createElement("h3");
+      kop.className = "groep-kop";
+      const nogOpen = groep.filter(item => !item.klaar).length;
+      kop.textContent = PRIORITEIT[sleutel].icoon + " " + PRIORITEIT[sleutel].titel + (nogOpen ? " · " + nogOpen : "");
+      blok.appendChild(kop);
+
+      const ul = document.createElement("ul");
+      ul.className = "compact";
+      for (const item of groep) ul.appendChild(maakRegel(item));
+      if (groep.length === 0) ul.innerHTML = '<p class="leeg sleep-tip">Sleep hier een taak naartoe</p>';
+      blok.appendChild(ul);
+
+      // Een taak hierheen slepen = deze prioriteit geven
+      maakSleepDoel(blok, item => { item.prioriteit = sleutel; });
+
+      // Lege groepen alleen laten zien in de To-do (daar kun je erheen slepen), niet op Home
+      if (groep.length || !alleenZonderDatum) lijst.appendChild(blok);
+    }
   }
 
   if (taken.length === 0) {
-    lijst.innerHTML = '<p class="leeg">Niks zonder deadline. Typ hierboven iets zonder datum in.</p>';
+    lijst.innerHTML = '<p class="leeg">Niks te doen. Typ hierboven iets in.</p>';
   }
   return taken.filter(item => !item.klaar).length;
 }
@@ -791,7 +921,7 @@ function kiesWeergave(nieuw) {
 
 // ----- Het toevoeg-venster -----
 // datum: als je op de ➕ van een bepaalde dag klikt (bijv. "2026-10-21")
-function openToevoegen(datum) {
+function openToevoegen(datum, soort = "taak") {
   const opDag = typeof datum === "string";
 
   // Op de Studie-pagina: een leerplan, of een opdracht/huiswerk via het formulier daar
@@ -804,7 +934,7 @@ function openToevoegen(datum) {
 
   // Kies alvast de soort die past bij de pagina waar je bent
   const standaard = { todo: "taak", agenda: "afspraak", home: "taak" };
-  if (opDag) document.getElementById("soort").value = "taak";
+  if (opDag) document.getElementById("soort").value = typeof soort === "string" ? soort : "taak";
   else if (standaard[pagina]) document.getElementById("soort").value = standaard[pagina];
   document.getElementById("herhaal").value = "";
   pasVeldenAan();
@@ -928,13 +1058,14 @@ function voegTodoToe(event) {
     soort: "taak",
     titel: titel,
     datum: document.getElementById("todo-datum").value, // leeg = geen deadline
-    prioriteit: "normaal",
+    prioriteit: document.getElementById("todo-prioriteit").value,
     klaar: false
   });
   bewaarItems();
   toonAlles();
   document.getElementById("todo-titel").value = "";
   document.getElementById("todo-datum").value = ""; // volgende keer weer standaard zonder datum
+  document.getElementById("todo-prioriteit").value = "normaal";
   document.getElementById("todo-titel").focus();
 }
 
@@ -1049,6 +1180,11 @@ function zoek() {
 // ===== 8. STARTEN =====
 document.getElementById("formulier").addEventListener("submit", voegToe);
 document.getElementById("todo-formulier").addEventListener("submit", voegTodoToe);
+document.querySelectorAll("[data-todo-sorteer]").forEach(knop =>
+  knop.addEventListener("click", () => {
+    bewaarInstelling("todoSorteer", knop.dataset.todoSorteer);
+    toonAlles();
+  }));
 document.getElementById("soort").addEventListener("change", pasVeldenAan);
 document.getElementById("herhaal").addEventListener("change", pasVeldenAan);
 document.getElementById("zoek").addEventListener("input", zoek);

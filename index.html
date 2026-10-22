@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261017e">
+  <link rel="stylesheet" href="style.css?v=20261022a">
 
   <!-- Om de app op je telefoon te installeren -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -122,7 +122,7 @@
                 <h2>Geen deadline</h2>
                 <button class="link-knop" data-ga-naar="todo">To-do →</button>
               </div>
-              <ul id="dash-geen-deadline"></ul>
+              <div id="dash-geen-deadline"></div>
             </div>
 
             <div class="kaart verborgen" id="kaart-alles-af">
@@ -145,27 +145,40 @@
         <!-- Snel iets toevoegen -->
         <form id="todo-formulier" class="todo-invoer">
           <input id="todo-titel" placeholder="Wat moet je doen? Bijv. 'Orthodontist zoeken'" required>
-          <input id="todo-datum" type="date" aria-label="Datum (mag leeg)" title="Datum (mag leeg: dan komt het bij 'Geen deadline')">
+          <select id="todo-prioriteit" aria-label="Hoe belangrijk">
+            <option value="normaal">☆ Normaal</option>
+            <option value="hoog">🔥 Belangrijk</option>
+            <option value="laag">💤 Als ik tijd heb</option>
+          </select>
+          <input id="todo-datum" type="date" aria-label="Datum (mag leeg)" title="Datum (mag leeg)">
           <button type="submit" class="hoofdknop">Toevoegen</button>
         </form>
-        <p class="info todo-uitleg">Zonder datum komt het bij <strong>Geen deadline</strong>. Met een datum komt het op die dag.</p>
-        <p id="todo-melding" class="alles-af verborgen"></p>
+        <p class="info todo-uitleg">Komt in <strong>Mijn to-do</strong>. De datum mag leeg blijven. Voor school (huiswerk, opdrachten, leerplan) gebruik je de pagina Studie.</p>
 
         <div class="todo-layout">
-          <!-- Links: dingen zonder deadline -->
-          <div class="kaart geen-deadline">
+          <!-- Links: je eigen to-do (los van school) -->
+          <div class="kaart mijn-todo">
             <div class="kaart-kop">
-              <h2>Geen deadline</h2>
+              <h2>Mijn to-do</h2>
+              <div class="schakelaar klein">
+                <button data-todo-sorteer="prioriteit">Prioriteit</button>
+                <button data-todo-sorteer="datum">Datum</button>
+              </div>
             </div>
-            <p class="info">Waar je je nog in wilt verdiepen of naar moet kijken. Klik op 🔥 / ☆ / 💤 om te kiezen hoe belangrijk.</p>
-            <ul id="lijst-takenlijst"></ul>
+            <p class="info">Sleep een taak naar een andere prioriteit, of klik op het kalendertje om de dag te veranderen.</p>
+            <div id="lijst-takenlijst"></div>
 
             <h3 class="groep-kop">Doelen</h3>
             <ul id="lijst-doel" class="compact"></ul>
           </div>
 
-          <!-- Rechts: per dag -->
+          <!-- Rechts: school en studie, per dag -->
           <div class="todo-dagen">
+            <div class="sectie-kop todo-school-kop">
+              <h2>School &amp; studie</h2>
+              <span class="info">Sleep een taak naar een andere dag</span>
+            </div>
+            <p id="todo-melding" class="alles-af verborgen"></p>
             <div id="lijst-te-doen" class="dagen-kolommen"></div>
           </div>
         </div>
@@ -477,13 +490,13 @@
   </script>
 
   <!-- De JavaScript-bestanden (het ?v= erachter is het versienummer, zodat je browser geen oude versie gebruikt) -->
-  <script src="weergaven.js?v=20261017e"></script>
-  <script src="lessen.js?v=20261017e"></script>
-  <script src="ideeen.js?v=20261017e"></script>
-  <script src="home.js?v=20261017e"></script>
-  <script src="leerplan.js?v=20261017e"></script>
-  <script src="app.js?v=20261017e"></script>
-  <script src="google.js?v=20261017e"></script>
+  <script src="weergaven.js?v=20261022a"></script>
+  <script src="lessen.js?v=20261022a"></script>
+  <script src="ideeen.js?v=20261022a"></script>
+  <script src="home.js?v=20261022a"></script>
+  <script src="leerplan.js?v=20261022a"></script>
+  <script src="app.js?v=20261022a"></script>
+  <script src="google.js?v=20261022a"></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="startGoogle()"></script>
 </body>
 
