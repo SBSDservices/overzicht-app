@@ -405,6 +405,11 @@ function alGepland(datum) {
 // en per taak een vakje om aan te vinken op welke dag je het doet
 function toonPlanRaster() {
   const vak = document.getElementById("plan-raster");
+  // Onthouden hoe ver je opzij en omlaag was gescrold, zodat je daar blijft
+  const oudeScroll = vak.querySelector(".plan-scroll");
+  const opzij = oudeScroll ? oudeScroll.scrollLeft : 0;
+  const venster = document.getElementById("plan-venster");
+  const omlaag = venster.scrollTop;
   vak.innerHTML = "";
   const dagen = planDagen();
   const tentamen = document.getElementById("plan-datum").value;
@@ -475,9 +480,16 @@ function toonPlanRaster() {
       knop.textContent = aan ? "✓" : "";
       knop.title = mooieDatum(datum) + (aan ? " (klik om weg te halen)" : " (klik om aan te vinken)");
       knop.onclick = () => {
+        // Alleen dit vakje aanpassen (niet het hele rooster opnieuw tekenen),
+        // zodat je niet terugspringt naar het begin
         if (datum in rij.dagen) delete rij.dagen[datum];
         else rij.dagen[datum] = null;
-        toonPlanRaster();
+        const nuAan = datum in rij.dagen;
+        knop.classList.toggle("aan", nuAan);
+        knop.classList.remove("klaar");
+        knop.textContent = nuAan ? "✓" : "";
+        knop.title = mooieDatum(datum) + (nuAan ? " (klik om weg te halen)" : " (klik om aan te vinken)");
+        toonPlanMelding();
       };
       cel.appendChild(knop);
     }
@@ -503,6 +515,8 @@ function toonPlanRaster() {
   }
 
   vak.appendChild(scroll);
+  scroll.scrollLeft = opzij;
+  venster.scrollTop = omlaag;
   toonPlanMelding();
 }
 
