@@ -1994,6 +1994,25 @@ li.sleept { opacity: 0.4; }
   background-color: var(--accent-zacht) !important;
 }
 
+/* Een tentamen bovenaan een dag: een roze balk, duidelijk geen taak */
+.toets-balk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  margin: 8px 0 4px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background-color: var(--toets-zacht);
+  border: 1px solid #f5d0fe;
+  color: var(--toets);
+  font-size: 13px;
+}
+
+.toets-balk strong { font-weight: 600; flex: 1 1 auto; }
+.toets-balk span { color: var(--tekst-zacht); font-size: 12px; }
+.toets-balk .verwijder { margin-left: auto; font-size: 14px; }
+
 /* De blauwe lijn die laat zien waar de taak terechtkomt */
 li.invoeg-hier { box-shadow: 0 -3px 0 0 var(--accent); }
 li.invoeg-onder { box-shadow: 0 3px 0 0 var(--accent); }

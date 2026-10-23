@@ -14,12 +14,12 @@ function toonHome() {
   const vandaagLijst = open.filter(item => item.datum === vandaag());
   const morgenLijst = open.filter(item => item.datum === plusDagen(vandaag(), 1));
 
-  // Kaarten zonder iets erin laten we weg
+  // Kaarten zonder iets erin laten we weg (een tentamen telt ook als "iets")
   const vandaagTaken = teLaat.concat(vandaagLijst);
-  toonDashLijst("dash-vandaag", vandaagTaken, teLaat);
-  toonDashLijst("dash-morgen", morgenLijst);
-  document.getElementById("kaart-vandaag").classList.toggle("verborgen", vandaagTaken.length === 0);
-  document.getElementById("kaart-morgen").classList.toggle("verborgen", morgenLijst.length === 0);
+  const toetsenVandaag = toonDashLijst("dash-vandaag", vandaagTaken, teLaat, vandaag());
+  const toetsenMorgen = toonDashLijst("dash-morgen", morgenLijst, [], plusDagen(vandaag(), 1));
+  document.getElementById("kaart-vandaag").classList.toggle("verborgen", vandaagTaken.length + toetsenVandaag === 0);
+  document.getElementById("kaart-morgen").classList.toggle("verborgen", morgenLijst.length + toetsenMorgen === 0);
   document.getElementById("dash-vandaag-titel").textContent = "Vandaag · " + mooieDatum(vandaag());
   document.getElementById("dash-morgen-titel").textContent = "Morgen · " + mooieDatum(plusDagen(vandaag(), 1));
 
@@ -98,10 +98,18 @@ function takenMetDatum() {
   return lijst;
 }
 
-// Een lijstje met taken; wat te laat is krijgt een rood labeltje
-function toonDashLijst(id, taken, teLaat = []) {
+// Een lijstje met taken; wat te laat is krijgt een rood labeltje.
+// Tentamens van die dag komen als roze balk erboven (geen taak). Geeft terug hoeveel tentamens.
+function toonDashLijst(id, taken, teLaat = [], datum = null) {
   const lijst = document.getElementById(id);
   lijst.innerHTML = "";
+
+  const kaart = lijst.closest(".kaart");
+  kaart.querySelectorAll(".toets-balk").forEach(balk => balk.remove());
+  const toetsen = datum ? toetsenOp(datum) : []; // staat in app.js
+  for (const toets of toetsen) kaart.insertBefore(maakToetsBalk(toets), lijst);
+
+  taken = taken.filter(item => item.soort !== "toets");
   taken.sort((a, b) => (a.klaar - b.klaar) || (a.datum || "").localeCompare(b.datum || "") || opVolgorde(a, b));
   for (const item of taken) {
     const li = maakRegel(item);
@@ -114,6 +122,7 @@ function toonDashLijst(id, taken, teLaat = []) {
     }
     lijst.appendChild(li);
   }
+  return toetsen.length;
 }
 
 // Een groet die past bij het moment van de dag

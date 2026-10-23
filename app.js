@@ -707,7 +707,11 @@ function isEigenTaak(item) {
 
 // Eén blok (kolom) voor één dag: kopje, wat er al in je agenda staat, en de taken
 function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
-  const blok = div("dag-blok" + (datum === vandaag() ? " is-vandaag" : "") + (datum ? "" : " te-laat"));
+  // Toetsen zijn geen taken: die komen als aparte balk bovenaan de dag
+  taken = taken.filter(item => item.soort !== "toets");
+  const toetsen = datum ? toetsenOp(datum) : [];
+  const blok = div("dag-blok" + (datum === vandaag() ? " is-vandaag" : "") + (datum ? "" : " te-laat") +
+    (toetsen.length ? " met-tentamen" : ""));
 
   const open = taken.filter(item => !item.klaar).length;
   const kop = div("dag-blok-kop");
@@ -729,6 +733,9 @@ function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
     kop.appendChild(plus);
   }
   blok.appendChild(kop);
+
+  // De tentamens van deze dag, los van de taken
+  for (const toets of toetsen) blok.appendChild(maakToetsBalk(toets));
 
   // Volgorde: eerst wat open staat, dan de volgorde die je zelf hebt gesleept, dan tijd en vak
   taken.sort((a, b) =>
@@ -773,6 +780,41 @@ function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
       });
   }
   return blok;
+}
+
+// Alle toetsen en tentamens op een dag (uit Google én wat je zelf hebt toegevoegd), zonder dubbele
+function toetsenOp(datum) {
+  const gezien = new Set();
+  return itemsOpDag(datum, alleItems(false))
+    .filter(item => item.soort !== "huiswerk" && item.soort !== "taak" && isToets(item))
+    .filter(item => {
+      const sleutel = item.titel.toLowerCase();
+      if (gezien.has(sleutel)) return false;
+      gezien.add(sleutel);
+      return true;
+    });
+}
+
+// Een roze balk met een tentamen: duidelijk geen taak (geen vinkje)
+function maakToetsBalk(toets) {
+  const balk = div("toets-balk");
+  const naam = document.createElement("strong");
+  naam.textContent = "📝 " + toets.titel;
+  balk.appendChild(naam);
+  const tijd = [toets.begintijd && toets.begintijd + (toets.eindtijd ? "–" + toets.eindtijd : ""), toets.locatie]
+    .filter(Boolean).join(" · ");
+  if (tijd) {
+    const info = document.createElement("span");
+    info.textContent = tijd;
+    balk.appendChild(info);
+  }
+  // Een eigen toets (niet uit Google) kun je hier nog weghalen
+  if (toets.bron !== "google" && !toets.lesId) {
+    const weg = maakVerwijderKnop(toets.id);
+    weg.title = "Toets verwijderen";
+    balk.appendChild(weg);
+  }
+  return balk;
 }
 
 // Een korte regel met wat er op een dag in je agenda staat,
