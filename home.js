@@ -102,7 +102,7 @@ function takenMetDatum() {
 function toonDashLijst(id, taken, teLaat = []) {
   const lijst = document.getElementById(id);
   lijst.innerHTML = "";
-  taken.sort((a, b) => (a.klaar - b.klaar) || (a.datum || "").localeCompare(b.datum || ""));
+  taken.sort((a, b) => (a.klaar - b.klaar) || (a.datum || "").localeCompare(b.datum || "") || opVolgorde(a, b));
   for (const item of taken) {
     const li = maakRegel(item);
     if (teLaat.includes(item)) {

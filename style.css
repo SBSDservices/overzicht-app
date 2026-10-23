@@ -1994,6 +1994,10 @@ li.sleept { opacity: 0.4; }
   background-color: var(--accent-zacht) !important;
 }
 
+/* De blauwe lijn die laat zien waar de taak terechtkomt */
+li.invoeg-hier { box-shadow: 0 -3px 0 0 var(--accent); }
+li.invoeg-onder { box-shadow: 0 3px 0 0 var(--accent); }
+
 /* Telefoons zonder muis: geen "grijp"-cursor */
 @media (hover: none) {
   li.sleepbaar { cursor: default; }

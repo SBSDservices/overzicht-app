@@ -429,6 +429,7 @@ function maakRegel(item) {
   if (!item.herhalingVan) {
     li.appendChild(maakDatumKnop(item));
     li.draggable = true;
+    li.dataset.id = item.id; // zodat we bij het slepen weten welke taak dit is
     li.classList.add("sleepbaar");
     li.ondragstart = event => {
       event.dataTransfer.setData("text/plain", String(item.id));
@@ -475,24 +476,44 @@ function maakDatumKnop(item) {
 }
 
 // Maak van een vak een plek waar je taken naartoe kunt slepen
-function maakSleepDoel(element, bijLoslaten) {
+// bijSlepen (mag leeg): wordt steeds aangeroepen terwijl je boven het vak sleept
+function maakSleepDoel(element, bijLoslaten, bijSlepen = null) {
   element.addEventListener("dragover", event => {
     event.preventDefault();
     element.classList.add("sleep-hier");
+    if (bijSlepen) bijSlepen(event);
   });
   element.addEventListener("dragleave", event => {
-    if (!element.contains(event.relatedTarget)) element.classList.remove("sleep-hier");
+    if (!element.contains(event.relatedTarget)) {
+      element.classList.remove("sleep-hier");
+      if (bijSlepen) bijSlepen(null);
+    }
   });
   element.addEventListener("drop", event => {
     event.preventDefault();
     element.classList.remove("sleep-hier");
+    if (bijSlepen) bijSlepen(null);
     const id = Number(event.dataTransfer.getData("text/plain"));
     const item = items.find(ander => ander.id === id);
     if (!item) return;
-    bijLoslaten(item);
+    bijLoslaten(item, event);
     bewaarItems();
     toonAlles();
   });
+}
+
+// Waar in een lijst laat je de taak los? Geeft de regel terug waar hij vóór komt (of null = onderaan)
+function regelOnderMuis(lijst, event, behalveId) {
+  const regels = [...lijst.querySelectorAll("li[data-id]")].filter(li => Number(li.dataset.id) !== behalveId);
+  return regels.find(li => {
+    const vak = li.getBoundingClientRect();
+    return event.clientY < vak.top + vak.height / 2;
+  }) || null;
+}
+
+// Volgorde van taken op een dag (die je zelf door slepen kiest)
+function opVolgorde(a, b) {
+  return (a.volgorde ?? 9999) - (b.volgorde ?? 9999);
 }
 
 const PRIORITEIT = {
@@ -709,12 +730,10 @@ function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
   }
   blok.appendChild(kop);
 
-  // Een taak hierheen slepen = op deze dag zetten
-  if (datum) maakSleepDoel(blok, item => { item.datum = datum; });
-
-
+  // Volgorde: eerst wat open staat, dan de volgorde die je zelf hebt gesleept, dan tijd en vak
   taken.sort((a, b) =>
     (a.klaar - b.klaar) ||
+    opVolgorde(a, b) ||
     (a.datum || "").localeCompare(b.datum || "") ||
     (a.begintijd || "").localeCompare(b.begintijd || "") ||
     (a.vak || "").localeCompare(b.vak || ""));
@@ -723,6 +742,36 @@ function maakDagBlok(titel, taken, datum, metToevoegKnop = false) {
   for (const item of taken) lijst.appendChild(maakRegel(item));
   if (taken.length === 0) lijst.innerHTML = '<p class="leeg">Niks gepland</p>';
   blok.appendChild(lijst);
+
+  // Een taak hierheen slepen = op deze dag zetten, op de plek waar je hem loslaat.
+  // Zo kun je ook binnen een dag de volgorde veranderen (belangrijkste bovenaan).
+  if (datum) {
+    maakSleepDoel(blok,
+      (item, event) => {
+        const voor = regelOnderMuis(lijst, event, item.id);
+        const ids = [...lijst.querySelectorAll("li[data-id]")]
+          .map(li => Number(li.dataset.id))
+          .filter(id => id !== item.id);
+        ids.splice(voor ? ids.indexOf(Number(voor.dataset.id)) : ids.length, 0, item.id);
+        item.datum = datum;
+        ids.forEach((id, plek) => {
+          const taak = items.find(ander => ander.id === id);
+          if (taak) taak.volgorde = plek;
+        });
+      },
+      event => {
+        // De blauwe lijn laten zien waar de taak terechtkomt
+        lijst.querySelectorAll(".invoeg-hier, .invoeg-onder").forEach(li => li.classList.remove("invoeg-hier", "invoeg-onder"));
+        if (!event) return;
+        const gesleept = lijst.querySelector("li.sleept");
+        const voor = regelOnderMuis(lijst, event, gesleept ? Number(gesleept.dataset.id) : null);
+        if (voor) voor.classList.add("invoeg-hier");
+        else {
+          const laatste = [...lijst.querySelectorAll("li[data-id]")].filter(li => li !== gesleept).pop();
+          if (laatste) laatste.classList.add("invoeg-onder");
+        }
+      });
+  }
   return blok;
 }
 
